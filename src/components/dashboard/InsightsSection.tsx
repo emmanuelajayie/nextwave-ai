@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { TrendingUp, AlertTriangle, Brain } from "lucide-react";
-import { Chart } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import { Area, AreaChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const data = [
@@ -38,7 +38,7 @@ const InsightsSection = () => {
       <h2 className="text-lg font-semibold mb-4">AI Insights</h2>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <Chart config={{ data: { theme: { light: "#0EA5E9", dark: "#38BDF8" } } }}>
+          <ChartContainer config={{ data: { theme: { light: "#0EA5E9", dark: "#38BDF8" } } }}>
             <AreaChart data={data}>
               <defs>
                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -58,7 +58,7 @@ const InsightsSection = () => {
                 fill="url(#colorValue)"
               />
             </AreaChart>
-          </Chart>
+          </ChartContainer>
         </div>
         <div className="space-y-4">
           {insights.map((insight) => (
