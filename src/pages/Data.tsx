@@ -2,6 +2,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import { DataImport } from "@/components/data/DataImport";
 import { DataSources } from "@/components/data/DataSources";
 import { DataPreview } from "@/components/data/DataPreview";
+import { WebhookConfig } from "@/components/data/WebhookConfig";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 
@@ -19,6 +20,7 @@ const Data = () => {
         </div>
 
         <DataImport />
+        <WebhookConfig />
         <DataSources />
         <DataPreview />
 
