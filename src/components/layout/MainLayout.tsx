@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -14,23 +15,25 @@ import {
 import {
   BarChart3,
   Brain,
+  CleaningServices,
   Database,
   FileSpreadsheet,
   Home,
   Target,
-  RefreshCw,
 } from "lucide-react";
 
 const menuItems = [
   { title: "Dashboard", icon: Home, url: "/" },
-  { title: "Goals", icon: Target, url: "/goals" },
-  { title: "Data", icon: FileSpreadsheet, url: "/data" },
-  { title: "Models", icon: Brain, url: "/models" },
+  { title: "Data Collection", icon: FileSpreadsheet, url: "/data" },
+  { title: "Data Cleaning", icon: CleaningServices, url: "/data-cleaning" },
+  { title: "Predictive Models", icon: Brain, url: "/predictive-models" },
   { title: "Dashboards", icon: BarChart3, url: "/dashboards" },
-  { title: "Updates", icon: RefreshCw, url: "/updates" },
 ];
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
@@ -42,11 +45,18 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
                 <SidebarMenu>
                   {menuItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <a href={item.url} className="flex items-center gap-3">
+                      <SidebarMenuButton
+                        className={`${
+                          location.pathname === item.url
+                            ? "bg-primary/10 text-primary"
+                            : ""
+                        }`}
+                        onClick={() => navigate(item.url)}
+                      >
+                        <div className="flex items-center gap-3">
                           <item.icon className="w-5 h-5" />
                           <span>{item.title}</span>
-                        </a>
+                        </div>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
