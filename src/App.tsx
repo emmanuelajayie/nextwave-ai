@@ -8,6 +8,7 @@ import Data from "./pages/Data";
 import DataCleaning from "./pages/DataCleaning";
 import PredictiveModels from "./pages/PredictiveModels";
 import Dashboards from "./pages/Dashboards";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/data-cleaning" element={<DataCleaning />} />
           <Route path="/predictive-models" element={<PredictiveModels />} />
           <Route path="/dashboards" element={<Dashboards />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

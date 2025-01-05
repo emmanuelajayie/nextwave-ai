@@ -19,7 +19,7 @@ import {
   Database,
   FileSpreadsheet,
   Home,
-  Target,
+  Settings as SettingsIcon,
 } from "lucide-react";
 
 const menuItems = [
@@ -28,6 +28,7 @@ const menuItems = [
   { title: "Data Cleaning", icon: Eraser, url: "/data-cleaning" },
   { title: "Predictive Models", icon: Brain, url: "/predictive-models" },
   { title: "Dashboards", icon: BarChart3, url: "/dashboards" },
+  { title: "Settings", icon: SettingsIcon, url: "/settings" },
 ];
 
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
