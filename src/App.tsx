@@ -13,19 +13,11 @@ import { AuthForm } from "./components/auth/AuthForm";
 import { OnboardingFlow } from "./components/auth/OnboardingFlow";
 import { UserProfile } from "./components/auth/UserProfile";
 import { FeedbackDialog } from "./components/feedback/FeedbackDialog";
-import ErrorLogger from "./utils/errorLogger";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      meta: {
-        onError: (error: unknown) => {
-          if (error instanceof Error) {
-            ErrorLogger.logError(error);
-          }
-        }
-      }
     },
   },
 });
