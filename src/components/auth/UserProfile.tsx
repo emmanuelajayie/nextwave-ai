@@ -1,67 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { createClient } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
-
-// Initialize Supabase client with environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase credentials are missing');
-}
-
-const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey
-);
 
 export const UserProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-        setEmail(user.email);
-        // Fetch additional user data from your profiles table if needed
-      }
-    };
-
-    fetchUser();
-  }, []);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.updateUser({
-        email,
-        data: { full_name: fullName }
-      });
-
-      if (error) throw error;
-      toast.success("Profile updated successfully");
+      // Temporarily disabled Supabase profile updates
+      toast.info("Profile updates are currently disabled. Please try again later.");
     } catch (error) {
       console.error("Update error:", error);
-      toast.error(error.message);
+      toast.error("Profile update is currently unavailable");
     } finally {
       setIsLoading(false);
     }
   };
-
-  if (!user) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <Card className="p-6 max-w-md mx-auto">

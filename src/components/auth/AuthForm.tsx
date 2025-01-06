@@ -4,21 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { createClient } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
-
-// Initialize Supabase client with environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Supabase credentials are missing');
-}
-
-const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey
-);
 
 export const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -32,28 +18,11 @@ export const AuthForm = () => {
     setIsLoading(true);
     
     try {
-      if (isResetPassword) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email);
-        if (error) throw error;
-        toast.success("Password reset instructions sent to your email");
-      } else if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-        if (error) throw error;
-        toast.success("Verification email sent! Please check your inbox");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) throw error;
-        toast.success("Successfully logged in!");
-      }
+      // Temporarily disabled Supabase auth
+      toast.info("Authentication is currently disabled. Please try again later.");
     } catch (error) {
       console.error("Auth error:", error);
-      toast.error(error.message);
+      toast.error("Authentication is currently unavailable");
     } finally {
       setIsLoading(false);
     }
