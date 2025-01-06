@@ -9,6 +9,9 @@ import DataCleaning from "./pages/DataCleaning";
 import PredictiveModels from "./pages/PredictiveModels";
 import Dashboards from "./pages/Dashboards";
 import Settings from "./pages/Settings";
+import { AuthForm } from "./components/auth/AuthForm";
+import { OnboardingFlow } from "./components/auth/OnboardingFlow";
+import { UserProfile } from "./components/auth/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +23,9 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth" element={<AuthForm />} />
+          <Route path="/onboarding" element={<OnboardingFlow />} />
+          <Route path="/profile" element={<UserProfile />} />
           <Route path="/data" element={<Data />} />
           <Route path="/data-cleaning" element={<DataCleaning />} />
           <Route path="/predictive-models" element={<PredictiveModels />} />
