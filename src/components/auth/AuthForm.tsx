@@ -7,9 +7,17 @@ import { toast } from "sonner";
 import { createClient } from "@supabase/supabase-js";
 import { Loader2 } from "lucide-react";
 
+// Initialize Supabase client with environment variables
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Supabase credentials are missing');
+}
+
 const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
+  supabaseUrl,
+  supabaseAnonKey
 );
 
 export const AuthForm = () => {
