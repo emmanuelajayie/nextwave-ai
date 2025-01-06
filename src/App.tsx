@@ -12,8 +12,20 @@ import Settings from "./pages/Settings";
 import { AuthForm } from "./components/auth/AuthForm";
 import { OnboardingFlow } from "./components/auth/OnboardingFlow";
 import { UserProfile } from "./components/auth/UserProfile";
+import { FeedbackDialog } from "./components/feedback/FeedbackDialog";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      onError: (error) => {
+        if (error instanceof Error) {
+          ErrorLogger.logError(error);
+        }
+      },
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -32,6 +44,7 @@ const App = () => (
           <Route path="/dashboards" element={<Dashboards />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
+        <FeedbackDialog />
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
