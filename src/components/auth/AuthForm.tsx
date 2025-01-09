@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -18,11 +19,28 @@ export const AuthForm = () => {
     setIsLoading(true);
     
     try {
-      // Temporarily disabled Supabase auth
-      toast.info("Authentication is currently disabled. Please try again later.");
+      if (isResetPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email);
+        if (error) throw error;
+        toast.success("Password reset instructions sent to your email");
+      } else if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast.success("Check your email to confirm your account");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast.success("Successfully logged in");
+      }
     } catch (error) {
       console.error("Auth error:", error);
-      toast.error("Authentication is currently unavailable");
+      toast.error(error.message || "Authentication failed");
     } finally {
       setIsLoading(false);
     }
