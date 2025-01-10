@@ -1,16 +1,17 @@
+import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { Navigate, useLocation } from "react-router-dom";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  const location = useLocation();
+  console.log("Protected route - User:", user, "Loading:", loading);
 
   if (loading) {
     return <div>Loading...</div>;
   }
 
   if (!user) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+    console.log("No user found, redirecting to /auth");
+    return <Navigate to="/auth" replace />;
   }
 
   return <>{children}</>;
