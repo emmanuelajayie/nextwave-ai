@@ -1,26 +1,68 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const UserProfile = () => {
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
 
+  useEffect(() => {
+    if (user) {
+      setEmail(user.email || "");
+      // Fetch profile data if available
+      const fetchProfile = async () => {
+        if (!supabase) return;
+        
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+          
+        if (error) {
+          console.error("Error fetching profile:", error);
+          return;
+        }
+        
+        if (data) {
+          setFullName(data.full_name || "");
+        }
+      };
+      
+      fetchProfile();
+    }
+  }, [user]);
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!supabase || !user) return;
+    
     setIsLoading(true);
 
     try {
-      // Temporarily disabled Supabase profile updates
-      toast.info("Profile updates are currently disabled. Please try again later.");
+      const updates = {
+        id: user.id,
+        full_name: fullName,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('profiles')
+        .upsert(updates);
+
+      if (error) throw error;
+      toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Update error:", error);
-      toast.error("Profile update is currently unavailable");
+      toast.error("Error updating profile");
     } finally {
       setIsLoading(false);
     }
@@ -47,8 +89,8 @@ export const UserProfile = () => {
             id="email"
             type="email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
+            readOnly
+            className="bg-gray-100"
           />
         </div>
 
