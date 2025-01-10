@@ -16,7 +16,6 @@ import {
   BarChart3,
   Brain,
   Eraser,
-  Database,
   FileSpreadsheet,
   Home,
   Settings as SettingsIcon,
@@ -34,11 +33,12 @@ const menuItems = [
 const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  console.log("Current location:", location.pathname);
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
-        <Sidebar>
+      <div className="min-h-screen flex w-full bg-background">
+        <Sidebar className="border-r">
           <SidebarContent>
             <SidebarGroup>
               <SidebarGroupLabel>Navigation</SidebarGroupLabel>
@@ -47,7 +47,7 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
                   {menuItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
-                        className={`${
+                        className={`w-full ${
                           location.pathname === item.url
                             ? "bg-primary/10 text-primary"
                             : ""
@@ -66,8 +66,8 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
             </SidebarGroup>
           </SidebarContent>
         </Sidebar>
-        <main className="flex-1 p-8">
-          <SidebarTrigger />
+        <main className="flex-1 p-8 overflow-auto">
+          <SidebarTrigger className="mb-4 lg:hidden" />
           {children}
         </main>
       </div>
