@@ -17,8 +17,22 @@ const getSupabaseClient = () => {
   
   return createClient(
     window.SUPABASE_URL,
-    window.SUPABASE_ANON_KEY
+    window.SUPABASE_ANON_KEY,
+    {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    }
   );
 };
 
 export const supabase = getSupabaseClient();
+
+// Add type safety for profiles table
+export type Profile = {
+  id: string;
+  full_name: string | null;
+  updated_at: string | null;
+};
