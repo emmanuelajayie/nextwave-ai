@@ -5,10 +5,12 @@ import { GoalsOverview } from "@/components/goals/GoalsOverview";
 import InsightsSection from "@/components/dashboard/InsightsSection";
 
 const Index = () => {
+  console.log("Rendering Index page");
+  
   return (
     <MainLayout>
-      <DashboardHeader />
       <div className="space-y-6">
+        <DashboardHeader />
         <MetricsGrid />
         <GoalsOverview />
         <InsightsSection />
