@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -8,9 +9,39 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { ChartLine, Database } from "lucide-react";
+import { ChartLine, Database, Loader2 } from "lucide-react";
+import { generatePrediction } from "@/lib/ai";
 
 export const ModelBuilder = () => {
+  const [loading, setLoading] = useState(false);
+  const [selectedSource, setSelectedSource] = useState<string>("");
+  const [modelType, setModelType] = useState<"regression" | "classification" | "clustering">("regression");
+  const [target, setTarget] = useState<string>("");
+
+  const handleGenerateModel = async () => {
+    if (!selectedSource || !modelType) {
+      toast.error("Please select all required fields");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      console.log("Generating model with:", { selectedSource, modelType, target });
+      const result = await generatePrediction({
+        data: [1, 2, 3, 4, 5], // Replace with actual data from selected source
+        modelType,
+        target,
+      });
+      
+      console.log("Model generation result:", result);
+      toast.success("Model generated successfully");
+    } catch (error) {
+      console.error("Error generating model:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Card className="p-6">
       <div className="flex items-center gap-2 mb-6">
@@ -22,7 +53,7 @@ export const ModelBuilder = () => {
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium mb-2 block">Data Source</label>
-            <Select onValueChange={(value) => console.log("Selected source:", value)}>
+            <Select onValueChange={setSelectedSource}>
               <SelectTrigger>
                 <SelectValue placeholder="Select data source" />
               </SelectTrigger>
@@ -36,7 +67,7 @@ export const ModelBuilder = () => {
 
           <div>
             <label className="text-sm font-medium mb-2 block">Model Type</label>
-            <Select onValueChange={(value) => console.log("Selected type:", value)}>
+            <Select onValueChange={(value: "regression" | "classification" | "clustering") => setModelType(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select model type" />
               </SelectTrigger>
@@ -50,7 +81,7 @@ export const ModelBuilder = () => {
 
           <div>
             <label className="text-sm font-medium mb-2 block">Target Variable</label>
-            <Select onValueChange={(value) => console.log("Selected target:", value)}>
+            <Select onValueChange={setTarget}>
               <SelectTrigger>
                 <SelectValue placeholder="Select target variable" />
               </SelectTrigger>
@@ -67,12 +98,17 @@ export const ModelBuilder = () => {
           <Button 
             size="lg" 
             className="w-full"
-            onClick={() => {
-              console.log("Generating model...");
-              toast.success("Model generation started");
-            }}
+            onClick={handleGenerateModel}
+            disabled={loading}
           >
-            Generate Model
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              'Generate Model'
+            )}
           </Button>
         </div>
       </div>
