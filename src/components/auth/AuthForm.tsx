@@ -13,6 +13,8 @@ export const AuthForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  console.log("AuthForm rendered");
+
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -64,11 +66,13 @@ export const AuthForm = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome</CardTitle>
-          <CardDescription>Sign in to your account or create a new one</CardDescription>
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold">Welcome</CardTitle>
+          <CardDescription>
+            Sign in to your account or create a new one
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="signin" className="w-full">
@@ -79,7 +83,7 @@ export const AuthForm = () => {
             
             <TabsContent value="signin">
               <form onSubmit={handleSignIn} className="space-y-4">
-                <div>
+                <div className="space-y-2">
                   <Input
                     type="email"
                     placeholder="Email"
@@ -88,7 +92,7 @@ export const AuthForm = () => {
                     required
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Input
                     type="password"
                     placeholder="Password"
@@ -105,7 +109,7 @@ export const AuthForm = () => {
             
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
-                <div>
+                <div className="space-y-2">
                   <Input
                     type="email"
                     placeholder="Email"
@@ -114,7 +118,7 @@ export const AuthForm = () => {
                     required
                   />
                 </div>
-                <div>
+                <div className="space-y-2">
                   <Input
                     type="password"
                     placeholder="Password"
@@ -131,7 +135,7 @@ export const AuthForm = () => {
           </Tabs>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-muted-foreground">
             Protected by Supabase Auth
           </p>
         </CardFooter>
