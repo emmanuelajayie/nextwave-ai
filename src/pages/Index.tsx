@@ -3,6 +3,7 @@ import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import { GoalsOverview } from "@/components/goals/GoalsOverview";
 import InsightsSection from "@/components/dashboard/InsightsSection";
+import { SetupChecklist } from "@/components/setup/SetupChecklist";
 
 const Index = () => {
   console.log("Rendering Index page");
@@ -11,6 +12,7 @@ const Index = () => {
     <MainLayout>
       <div className="space-y-6">
         <DashboardHeader />
+        <SetupChecklist />
         <MetricsGrid />
         <GoalsOverview />
         <InsightsSection />
