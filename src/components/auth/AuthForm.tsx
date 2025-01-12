@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 export const AuthForm = () => {
   const navigate = useNavigate();
@@ -75,6 +77,13 @@ export const AuthForm = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Alert className="mb-4 bg-blue-50 text-blue-800 border-blue-200">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              For testing: Use any email and a password with 6+ characters
+            </AlertDescription>
+          </Alert>
+          
           <Tabs defaultValue="signin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -95,10 +104,11 @@ export const AuthForm = () => {
                 <div className="space-y-2">
                   <Input
                     type="password"
-                    placeholder="Password"
+                    placeholder="Password (6+ characters)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    minLength={6}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -121,10 +131,11 @@ export const AuthForm = () => {
                 <div className="space-y-2">
                   <Input
                     type="password"
-                    placeholder="Password"
+                    placeholder="Password (6+ characters)"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    minLength={6}
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
