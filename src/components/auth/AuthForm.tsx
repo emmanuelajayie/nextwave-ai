@@ -15,7 +15,7 @@ export const AuthForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  console.log("AuthForm rendered");
+  console.log("AuthForm rendered, supabase client:", !!supabase);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +23,8 @@ export const AuthForm = () => {
     console.log("Attempting signup with:", email);
     
     try {
+      if (!supabase) throw new Error("Supabase client not initialized");
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -49,6 +51,8 @@ export const AuthForm = () => {
     console.log("Attempting signin with:", email);
 
     try {
+      if (!supabase) throw new Error("Supabase client not initialized");
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
