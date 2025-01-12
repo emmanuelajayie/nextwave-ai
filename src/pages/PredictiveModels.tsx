@@ -3,6 +3,7 @@ import { ModelPerformance } from "@/components/predictive/ModelPerformance";
 import { ModelTuning } from "@/components/predictive/ModelTuning";
 import { ModelInsights } from "@/components/predictive/ModelInsights";
 import { ModelDeployment } from "@/components/predictive/ModelDeployment";
+import { ScheduledTasks } from "@/components/automation/ScheduledTasks";
 
 const PredictiveModels = () => {
   return (
@@ -17,6 +18,7 @@ const PredictiveModels = () => {
           <ModelTuning />
         </div>
         <ModelInsights />
+        <ScheduledTasks />
         <ModelDeployment />
       </div>
     </div>
