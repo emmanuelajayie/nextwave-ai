@@ -14,6 +14,7 @@ import {
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { supabase } from "@/integrations/supabase/client";
 
 const formSchema = z.object({
   webhookUrl: z.string().url("Please enter a valid webhook URL"),
@@ -36,27 +37,20 @@ export const WebhookConfig = () => {
     console.log("Configuring webhook:", values);
 
     try {
-      // Test webhook connection
-      const response = await fetch(values.webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        mode: "no-cors",
-        body: JSON.stringify({
-          test: true,
-          timestamp: new Date().toISOString(),
-        }),
+      const { error } = await supabase.from("crm_integrations").insert({
+        name: values.name,
+        crm_type: "custom",
+        webhook_url: values.webhookUrl,
+        status: "active",
       });
 
-      toast.success("Webhook configured successfully");
-      
-      // Here you would typically save the webhook configuration
-      console.log("Webhook test successful:", values);
-      
+      if (error) throw error;
+
+      toast.success("Custom CRM webhook configured successfully");
+      form.reset();
     } catch (error) {
       console.error("Error configuring webhook:", error);
-      toast.error("Failed to configure webhook. Please check the URL and try again.");
+      toast.error("Failed to configure webhook. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -74,7 +68,7 @@ export const WebhookConfig = () => {
               <FormItem>
                 <FormLabel>Integration Name</FormLabel>
                 <FormControl>
-                  <Input placeholder="My CRM Integration" {...field} />
+                  <Input placeholder="My Custom CRM Integration" {...field} />
                 </FormControl>
                 <FormDescription>
                   A friendly name for this integration

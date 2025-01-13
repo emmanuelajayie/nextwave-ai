@@ -4,6 +4,7 @@ import { DataPreview } from "@/components/data/DataPreview";
 import { DataSources } from "@/components/data/DataSources";
 import { CRMIntegration } from "@/components/data/CRMIntegration";
 import { CRMList } from "@/components/data/CRMList";
+import { WebhookConfig } from "@/components/data/WebhookConfig";
 
 const Data = () => {
   return (
@@ -16,6 +17,7 @@ const Data = () => {
             <CRMIntegration />
             <CRMList />
           </div>
+          <WebhookConfig />
           <DataSources />
           <DataPreview />
         </div>
