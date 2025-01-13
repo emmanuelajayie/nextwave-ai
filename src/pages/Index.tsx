@@ -4,6 +4,7 @@ import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import { GoalsOverview } from "@/components/goals/GoalsOverview";
 import InsightsSection from "@/components/dashboard/InsightsSection";
 import { SetupChecklist } from "@/components/setup/SetupChecklist";
+import { ModelTraining } from "@/components/predictive/ModelTraining";
 
 const Index = () => {
   console.log("Rendering Index page");
@@ -14,6 +15,7 @@ const Index = () => {
         <DashboardHeader />
         <SetupChecklist />
         <MetricsGrid />
+        <ModelTraining />
         <GoalsOverview />
         <InsightsSection />
       </div>
