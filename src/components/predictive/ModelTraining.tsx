@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Upload, ChartLineUp } from "lucide-react";
+import { Upload, ChartLine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export const ModelTraining = () => {
@@ -36,19 +36,13 @@ export const ModelTraining = () => {
       // Here we'll just simulate model training for now
       await new Promise(resolve => setTimeout(resolve, 2000));
 
+      // Store training info in lovable Auth table
       const { data, error } = await supabase
-        .from('ml_models')
-        .insert([
-          {
-            name: modelName,
-            type: modelType,
-            config: {
-              features: ["example_feature"],
-              target: "example_target"
-            },
-            status: 'trained'
-          }
-        ]);
+        .from('lovable Auth')
+        .insert({
+          full_name: modelName, // Using full_name to store model name
+          updated_at: new Date().toISOString()
+        });
 
       if (error) throw error;
 
@@ -116,7 +110,7 @@ export const ModelTraining = () => {
             "Training Model..."
           ) : (
             <>
-              <ChartLineUp className="w-4 h-4 mr-2" />
+              <ChartLine className="w-4 h-4 mr-2" />
               Train Model
             </>
           )}
