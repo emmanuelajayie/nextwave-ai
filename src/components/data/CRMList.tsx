@@ -99,7 +99,7 @@ export const CRMList = () => {
               <TableCell className="capitalize">{integration.crm_type}</TableCell>
               <TableCell>
                 <Badge
-                  variant={integration.status === "active" ? "success" : "secondary"}
+                  variant={integration.status === "active" ? "default" : "secondary"}
                 >
                   {integration.status}
                 </Badge>
