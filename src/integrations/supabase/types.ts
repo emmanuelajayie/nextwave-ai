@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      crm_integrations: {
+        Row: {
+          api_key: string | null
+          config: Json | null
+          created_at: string | null
+          crm_type: Database["public"]["Enums"]["crm_type"]
+          id: string
+          last_sync_at: string | null
+          name: string
+          status: string | null
+          updated_at: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          config?: Json | null
+          created_at?: string | null
+          crm_type: Database["public"]["Enums"]["crm_type"]
+          id?: string
+          last_sync_at?: string | null
+          name: string
+          status?: string | null
+          updated_at?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          config?: Json | null
+          created_at?: string | null
+          crm_type?: Database["public"]["Enums"]["crm_type"]
+          id?: string
+          last_sync_at?: string | null
+          name?: string
+          status?: string | null
+          updated_at?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
       "lovable Auth": {
         Row: {
           created_at: string
@@ -41,7 +80,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      crm_type: "hubspot" | "zoho" | "salesforce" | "custom"
     }
     CompositeTypes: {
       [_ in never]: never
