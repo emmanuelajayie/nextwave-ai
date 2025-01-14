@@ -11,21 +11,108 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Clock, Send, BarChart } from "lucide-react";
+import { Clock, Send, BarChart, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 export const ScheduledTasks = () => {
   const [emailNotifications, setEmailNotifications] = useState(false);
+  const [analyticsSchedule, setAnalyticsSchedule] = useState("");
+  const [analyticsTime, setAnalyticsTime] = useState("");
+  const [reportsSchedule, setReportsSchedule] = useState("");
+  const [reportsTime, setReportsTime] = useState("");
 
-  const handleScheduleChange = (value: string) => {
-    console.log("Schedule changed to:", value);
-    toast.success(`Task schedule set to ${value}`);
+  // Fetch existing workflow configuration
+  const { data: workflows, isLoading } = useQuery({
+    queryKey: ['workflows'],
+    queryFn: async () => {
+      console.log('Fetching workflows...');
+      const { data, error } = await supabase
+        .from('workflows')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('Error fetching workflows:', error);
+        throw error;
+      }
+
+      console.log('Fetched workflows:', data);
+      return data;
+    }
+  });
+
+  // Update workflow configuration
+  const { mutate: updateWorkflow, isPending } = useMutation({
+    mutationFn: async () => {
+      console.log('Updating workflow configuration...');
+      const workflowData = {
+        name: 'Automated Tasks',
+        config: {
+          analytics: {
+            schedule: analyticsSchedule,
+            time: analyticsTime,
+          },
+          reports: {
+            schedule: reportsSchedule,
+            time: reportsTime,
+          },
+          notifications: {
+            email: emailNotifications,
+          },
+        },
+        status: 'active',
+      };
+
+      const { data, error } = await supabase
+        .from('workflows')
+        .upsert(workflowData)
+        .select();
+
+      if (error) {
+        console.error('Error updating workflow:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Schedule settings saved successfully');
+    },
+    onError: (error) => {
+      console.error('Error saving schedule:', error);
+      toast.error('Failed to save schedule settings');
+    },
+  });
+
+  // Handle schedule changes
+  const handleScheduleChange = (value: string, type: 'analytics' | 'reports') => {
+    if (type === 'analytics') {
+      setAnalyticsSchedule(value);
+    } else {
+      setReportsSchedule(value);
+    }
+    console.log(`${type} schedule changed to:`, value);
   };
 
+  // Handle notification toggle
   const handleNotificationToggle = (enabled: boolean) => {
     setEmailNotifications(enabled);
-    toast.success(`Email notifications ${enabled ? "enabled" : "disabled"}`);
+    console.log('Email notifications:', enabled);
+    toast.success(`Email notifications ${enabled ? 'enabled' : 'disabled'}`);
   };
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
@@ -43,7 +130,10 @@ export const ScheduledTasks = () => {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Select onValueChange={handleScheduleChange}>
+            <Select 
+              value={analyticsSchedule} 
+              onValueChange={(value) => handleScheduleChange(value, 'analytics')}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select frequency" />
               </SelectTrigger>
@@ -53,7 +143,11 @@ export const ScheduledTasks = () => {
                 <SelectItem value="monthly">Monthly</SelectItem>
               </SelectContent>
             </Select>
-            <Input type="time" placeholder="Select time" />
+            <Input 
+              type="time" 
+              value={analyticsTime}
+              onChange={(e) => setAnalyticsTime(e.target.value)}
+            />
           </div>
         </div>
 
@@ -69,7 +163,10 @@ export const ScheduledTasks = () => {
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <Select onValueChange={handleScheduleChange}>
+            <Select 
+              value={reportsSchedule}
+              onValueChange={(value) => handleScheduleChange(value, 'reports')}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select frequency" />
               </SelectTrigger>
@@ -79,7 +176,11 @@ export const ScheduledTasks = () => {
                 <SelectItem value="monthly">Monthly</SelectItem>
               </SelectContent>
             </Select>
-            <Input type="time" placeholder="Select time" />
+            <Input 
+              type="time"
+              value={reportsTime}
+              onChange={(e) => setReportsTime(e.target.value)}
+            />
           </div>
         </div>
 
@@ -97,9 +198,22 @@ export const ScheduledTasks = () => {
           />
         </div>
 
-        <Button className="w-full" onClick={() => toast.success("Settings saved")}>
-          <Clock className="mr-2 h-4 w-4" />
-          Save Schedule Settings
+        <Button 
+          className="w-full" 
+          onClick={() => updateWorkflow()}
+          disabled={isPending}
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Clock className="mr-2 h-4 w-4" />
+              Save Schedule Settings
+            </>
+          )}
         </Button>
       </div>
     </Card>
