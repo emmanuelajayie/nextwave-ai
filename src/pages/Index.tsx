@@ -6,6 +6,9 @@ import InsightsSection from "@/components/dashboard/InsightsSection";
 import { SetupChecklist } from "@/components/setup/SetupChecklist";
 import { ModelTraining } from "@/components/predictive/ModelTraining";
 import { DataCleaningPreferences } from "@/components/setup/DataCleaningPreferences";
+import { TeamManagement } from "@/components/collaboration/TeamManagement";
+import { ExportOptions } from "@/components/exports/ExportOptions";
+import { ScheduledTasks } from "@/components/automation/ScheduledTasks";
 
 const Index = () => {
   console.log("Rendering Index page");
@@ -14,12 +17,17 @@ const Index = () => {
     <MainLayout>
       <div className="space-y-6">
         <DashboardHeader />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <TeamManagement />
+          <ExportOptions />
+        </div>
         <SetupChecklist />
         <DataCleaningPreferences />
         <MetricsGrid />
         <ModelTraining />
         <GoalsOverview />
         <InsightsSection />
+        <ScheduledTasks />
       </div>
     </MainLayout>
   );

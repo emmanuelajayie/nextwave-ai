@@ -1,0 +1,3 @@
+project_id = "zpxciicizzdyxqqnixra"
+[functions.process-export]
+verify_jwt = true
