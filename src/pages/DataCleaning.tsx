@@ -1,6 +1,7 @@
 import { DataCleaningTools } from "@/components/data-cleaning/DataCleaningTools";
 import { DataPreview } from "@/components/data-cleaning/DataPreview";
 import { CleaningActions } from "@/components/data-cleaning/CleaningActions";
+import { DataEnrichment } from "@/components/data-cleaning/DataEnrichment";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +37,10 @@ export default function DataCleaning() {
       </Alert>
 
       <div className="grid gap-6 md:grid-cols-[300px,1fr]">
-        <DataCleaningTools onCleaningComplete={handleCleaningComplete} />
+        <div className="space-y-6">
+          <DataCleaningTools onCleaningComplete={handleCleaningComplete} />
+          <DataEnrichment />
+        </div>
         <div className="space-y-6">
           <DataPreview />
           <CleaningActions />
