@@ -5,6 +5,7 @@ import { GoalsOverview } from "@/components/goals/GoalsOverview";
 import InsightsSection from "@/components/dashboard/InsightsSection";
 import { SetupChecklist } from "@/components/setup/SetupChecklist";
 import { ModelTraining } from "@/components/predictive/ModelTraining";
+import { DataCleaningPreferences } from "@/components/setup/DataCleaningPreferences";
 
 const Index = () => {
   console.log("Rendering Index page");
@@ -14,6 +15,7 @@ const Index = () => {
       <div className="space-y-6">
         <DashboardHeader />
         <SetupChecklist />
+        <DataCleaningPreferences />
         <MetricsGrid />
         <ModelTraining />
         <GoalsOverview />
