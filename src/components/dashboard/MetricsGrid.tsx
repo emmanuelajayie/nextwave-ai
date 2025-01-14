@@ -30,13 +30,13 @@ const metrics = [
 
 const MetricsGrid = () => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
       {metrics.map((metric) => (
-        <Card key={metric.title} className="p-6">
+        <Card key={metric.title} className="p-4 md:p-6">
           <div className="flex items-start justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">{metric.title}</p>
-              <h3 className="text-2xl font-bold mt-2">{metric.value}</h3>
+              <h3 className="text-xl md:text-2xl font-bold mt-1 md:mt-2">{metric.value}</h3>
               <p className="text-sm text-green-500 mt-1">
                 {metric.change} this week
               </p>
