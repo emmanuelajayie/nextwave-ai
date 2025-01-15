@@ -5,17 +5,17 @@ const CRM_CONFIGS = {
   hubspot: {
     name: "HubSpot",
     authUrl: "https://app.hubspot.com/oauth/authorize",
-    clientId: process.env.VITE_HUBSPOT_CLIENT_ID || "",
+    clientId: import.meta.env.VITE_HUBSPOT_CLIENT_ID || "",
   },
   zoho: {
     name: "Zoho",
     authUrl: "https://accounts.zoho.com/oauth/v2/auth",
-    clientId: process.env.VITE_ZOHO_CLIENT_ID || "",
+    clientId: import.meta.env.VITE_ZOHO_CLIENT_ID || "",
   },
   salesforce: {
     name: "Salesforce",
     authUrl: "https://login.salesforce.com/services/oauth2/authorize",
-    clientId: process.env.VITE_SALESFORCE_CLIENT_ID || "",
+    clientId: import.meta.env.VITE_SALESFORCE_CLIENT_ID || "",
   },
 };
 
