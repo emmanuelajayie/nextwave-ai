@@ -20,6 +20,7 @@ interface CRMIntegration {
   crm_type: string;
   status: string;
   last_sync_at: string | null;
+  oauth_data: Record<string, any> | null;
 }
 
 export const CRMList = () => {

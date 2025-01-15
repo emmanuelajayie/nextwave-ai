@@ -42,6 +42,7 @@ export type Database = {
           id: string
           last_sync_at: string | null
           name: string
+          oauth_data: Json | null
           status: string | null
           updated_at: string | null
           webhook_url: string | null
@@ -54,6 +55,7 @@ export type Database = {
           id?: string
           last_sync_at?: string | null
           name: string
+          oauth_data?: Json | null
           status?: string | null
           updated_at?: string | null
           webhook_url?: string | null
@@ -66,6 +68,7 @@ export type Database = {
           id?: string
           last_sync_at?: string | null
           name?: string
+          oauth_data?: Json | null
           status?: string | null
           updated_at?: string | null
           webhook_url?: string | null
