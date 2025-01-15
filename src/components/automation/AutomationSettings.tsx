@@ -2,17 +2,96 @@ import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { RefreshCw, Database, Brain } from "lucide-react";
+import { RefreshCw, Database, Brain, Power } from "lucide-react";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 export const AutomationSettings = () => {
-  const handleToggle = (feature: string) => {
+  const [masterAutomation, setMasterAutomation] = useState(false);
+
+  // Fetch current automation status
+  const { data: workflows } = useQuery({
+    queryKey: ['automation-status'],
+    queryFn: async () => {
+      console.log('Fetching automation status...');
+      const { data, error } = await supabase
+        .from('workflows')
+        .select('status')
+        .eq('name', 'Automated Tasks')
+        .single();
+
+      if (error) {
+        console.error('Error fetching automation status:', error);
+        throw error;
+      }
+
+      const isEnabled = data?.status === 'active';
+      setMasterAutomation(isEnabled);
+      console.log('Current automation status:', isEnabled);
+      return isEnabled;
+    }
+  });
+
+  // Update automation status
+  const { mutate: updateAutomation } = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      console.log('Updating automation status to:', enabled);
+      const { data, error } = await supabase
+        .from('workflows')
+        .update({ status: enabled ? 'active' : 'inactive' })
+        .eq('name', 'Automated Tasks')
+        .select();
+
+      if (error) {
+        console.error('Error updating automation status:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: (_, enabled) => {
+      setMasterAutomation(enabled);
+      toast.success(`Automation ${enabled ? 'enabled' : 'disabled'}`);
+    },
+    onError: (error) => {
+      console.error('Error toggling automation:', error);
+      toast.error('Failed to update automation status');
+    }
+  });
+
+  const handleMasterToggle = (enabled: boolean) => {
+    console.log('Toggling master automation:', enabled);
+    updateAutomation(enabled);
+  };
+
+  const handleFeatureToggle = (feature: string) => {
     console.log(`Toggling ${feature} automation`);
     toast.success(`${feature} automation ${feature === "enabled" ? "enabled" : "disabled"}`);
   };
 
   return (
     <Card className="p-6">
-      <h2 className="text-lg font-semibold mb-4">Automation Settings</h2>
+      <div className="flex items-center justify-between mb-6 pb-4 border-b">
+        <div className="flex items-center space-x-4">
+          <div className="p-2 bg-primary/10 rounded-lg">
+            <Power className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <Label htmlFor="master-automation">Master Automation Control</Label>
+            <p className="text-sm text-muted-foreground">
+              Enable or disable all automated workflows
+            </p>
+          </div>
+        </div>
+        <Switch
+          id="master-automation"
+          checked={masterAutomation}
+          onCheckedChange={handleMasterToggle}
+        />
+      </div>
+
+      <h2 className="text-lg font-semibold mb-4">Individual Features</h2>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -26,7 +105,11 @@ export const AutomationSettings = () => {
               </p>
             </div>
           </div>
-          <Switch id="data-sync" onCheckedChange={() => handleToggle("Data sync")} />
+          <Switch 
+            id="data-sync" 
+            onCheckedChange={() => handleFeatureToggle("Data sync")}
+            disabled={!masterAutomation}
+          />
         </div>
 
         <div className="flex items-center justify-between">
@@ -41,7 +124,11 @@ export const AutomationSettings = () => {
               </p>
             </div>
           </div>
-          <Switch id="data-cleaning" onCheckedChange={() => handleToggle("Data cleaning")} />
+          <Switch 
+            id="data-cleaning" 
+            onCheckedChange={() => handleFeatureToggle("Data cleaning")}
+            disabled={!masterAutomation}
+          />
         </div>
 
         <div className="flex items-center justify-between">
@@ -56,7 +143,11 @@ export const AutomationSettings = () => {
               </p>
             </div>
           </div>
-          <Switch id="model-updates" onCheckedChange={() => handleToggle("Model updates")} />
+          <Switch 
+            id="model-updates" 
+            onCheckedChange={() => handleFeatureToggle("Model updates")}
+            disabled={!masterAutomation}
+          />
         </div>
       </div>
     </Card>
