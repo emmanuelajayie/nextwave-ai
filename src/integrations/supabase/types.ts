@@ -122,6 +122,45 @@ export type Database = {
           },
         ]
       }
+      file_storage: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_path: string
+          folder_path: string | null
+          id: string
+          is_folder: boolean | null
+          mime_type: string | null
+          size: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          folder_path?: string | null
+          id?: string
+          is_folder?: boolean | null
+          mime_type?: string | null
+          size?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          folder_path?: string | null
+          id?: string
+          is_folder?: boolean | null
+          mime_type?: string | null
+          size?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       "lovable Auth": {
         Row: {
           created_at: string

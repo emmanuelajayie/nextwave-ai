@@ -9,6 +9,7 @@ import { DataCleaningPreferences } from "@/components/setup/DataCleaningPreferen
 import { TeamManagement } from "@/components/collaboration/TeamManagement";
 import { ExportOptions } from "@/components/exports/ExportOptions";
 import { ScheduledTasks } from "@/components/automation/ScheduledTasks";
+import { FileStorage } from "@/components/storage/FileStorage";
 
 const Index = () => {
   console.log("Rendering Index page");
@@ -17,6 +18,7 @@ const Index = () => {
     <MainLayout>
       <div className="space-y-6">
         <DashboardHeader />
+        <FileStorage />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TeamManagement />
           <ExportOptions />
