@@ -10,6 +10,7 @@ import { TeamManagement } from "@/components/collaboration/TeamManagement";
 import { ExportOptions } from "@/components/exports/ExportOptions";
 import { ScheduledTasks } from "@/components/automation/ScheduledTasks";
 import { FileStorage } from "@/components/storage/FileStorage";
+import { PricingSection } from "@/components/pricing/PricingSection";
 
 const Index = () => {
   console.log("Rendering Index page");
@@ -18,6 +19,7 @@ const Index = () => {
     <MainLayout>
       <div className="space-y-6">
         <DashboardHeader />
+        <PricingSection />
         <FileStorage />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TeamManagement />
