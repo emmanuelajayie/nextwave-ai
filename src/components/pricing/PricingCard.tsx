@@ -11,6 +11,7 @@ interface PricingCardProps {
   title: string;
   description: string;
   price: string;
+  setupFee: string;
   features: PricingFeature[];
   onSelect: () => void;
   popular?: boolean;
@@ -20,6 +21,7 @@ export const PricingCard = ({
   title,
   description,
   price,
+  setupFee,
   features,
   onSelect,
   popular = false,
@@ -36,7 +38,10 @@ export const PricingCard = ({
         <p className="text-muted-foreground mt-2">{description}</p>
       </div>
       <div className="mb-6">
-        <span className="text-3xl font-bold">{price}</span>
+        <div className="flex flex-col gap-2">
+          <span className="text-3xl font-bold">{price}</span>
+          <span className="text-sm text-muted-foreground">+ {setupFee} one-time setup fee</span>
+        </div>
       </div>
       <ul className="space-y-3 mb-6">
         {features.map((feature, index) => (

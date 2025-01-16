@@ -5,10 +5,10 @@ import { supabase } from "@/lib/supabase";
 
 const plans = {
   basic: {
-    title: "Basic Plan",
-    description: "Perfect for small businesses",
+    title: "Startup Plan",
+    description: "Perfect for startups and small teams",
     price: "$200/month",
-    setupFee: "$500",
+    setupFee: "$800",
     features: [
       { text: "Basic data analysis", included: true },
       { text: "Up to 1,000 records/month", included: true },
@@ -18,10 +18,10 @@ const plans = {
     ],
   },
   standard: {
-    title: "Standard Plan",
-    description: "Ideal for growing companies",
+    title: "Business Plan",
+    description: "Ideal for medium-sized businesses",
     price: "$600/month",
-    setupFee: "$3,000",
+    setupFee: "$2,000",
     features: [
       { text: "Advanced data analysis", included: true },
       { text: "Up to 10,000 records/month", included: true },
@@ -32,8 +32,8 @@ const plans = {
     popular: true,
   },
   premium: {
-    title: "Premium Plan",
-    description: "For enterprise-level needs",
+    title: "Enterprise Plan",
+    description: "For large enterprises",
     price: "$2,000/month",
     setupFee: "$10,000",
     features: [
@@ -74,6 +74,10 @@ export const PricingSection = () => {
           setupFee: parseInt(plan.setupFee.replace(/[^0-9]/g, "")) * 100,
         }),
       });
+
+      if (!response.ok) {
+        throw new Error("Failed to initialize payment");
+      }
 
       const { authorization_url } = await response.json();
       

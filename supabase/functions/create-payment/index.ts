@@ -18,6 +18,8 @@ serve(async (req) => {
       throw new Error('Paystack secret key not configured');
     }
 
+    console.log(`Initializing payment for plan: ${plan}, email: ${email}, amount: ${amount}, setupFee: ${setupFee}`);
+
     // Initialize transaction with Paystack
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
@@ -38,12 +40,18 @@ serve(async (req) => {
     });
 
     const data = await response.json();
+    console.log('Paystack response:', data);
+
+    if (!data.status) {
+      throw new Error(data.message || 'Failed to initialize payment');
+    }
 
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     });
   } catch (error) {
+    console.error('Payment initialization error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
