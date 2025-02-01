@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Clock, Send, BarChart, Loader2 } from "lucide-react";
+import { Clock, Send, BarChart, Loader2, Workflow } from "lucide-react";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -22,6 +22,9 @@ export const ScheduledTasks = () => {
   const [analyticsTime, setAnalyticsTime] = useState("");
   const [reportsSchedule, setReportsSchedule] = useState("");
   const [reportsTime, setReportsTime] = useState("");
+  const [workflowSchedule, setWorkflowSchedule] = useState("");
+  const [workflowTime, setWorkflowTime] = useState("");
+  const [workflowDays, setWorkflowDays] = useState<string[]>([]);
 
   // Fetch existing workflow configuration
   const { data: workflows, isLoading } = useQuery({
@@ -59,6 +62,11 @@ export const ScheduledTasks = () => {
             schedule: reportsSchedule,
             time: reportsTime,
           },
+          workflow: {
+            schedule: workflowSchedule,
+            time: workflowTime,
+            days: workflowDays,
+          },
           notifications: {
             email: emailNotifications,
           },
@@ -88,20 +96,28 @@ export const ScheduledTasks = () => {
   });
 
   // Handle schedule changes
-  const handleScheduleChange = (value: string, type: 'analytics' | 'reports') => {
-    if (type === 'analytics') {
-      setAnalyticsSchedule(value);
-    } else {
-      setReportsSchedule(value);
+  const handleScheduleChange = (value: string, type: 'analytics' | 'reports' | 'workflow') => {
+    switch (type) {
+      case 'analytics':
+        setAnalyticsSchedule(value);
+        break;
+      case 'reports':
+        setReportsSchedule(value);
+        break;
+      case 'workflow':
+        setWorkflowSchedule(value);
+        break;
     }
     console.log(`${type} schedule changed to:`, value);
   };
 
-  // Handle notification toggle
-  const handleNotificationToggle = (enabled: boolean) => {
-    setEmailNotifications(enabled);
-    console.log('Email notifications:', enabled);
-    toast.success(`Email notifications ${enabled ? 'enabled' : 'disabled'}`);
+  // Handle day selection for workflow
+  const handleDaySelection = (day: string) => {
+    setWorkflowDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
   };
 
   if (isLoading) {
@@ -184,6 +200,54 @@ export const ScheduledTasks = () => {
           </div>
         </div>
 
+        {/* Workflow Schedule */}
+        <div className="space-y-4">
+          <div className="flex items-center space-x-4">
+            <Workflow className="h-5 w-5 text-primary" />
+            <div>
+              <Label>Full Workflow</Label>
+              <p className="text-sm text-muted-foreground">
+                Schedule complete workflow execution
+              </p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Select 
+              value={workflowSchedule}
+              onValueChange={(value) => handleScheduleChange(value, 'workflow')}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select frequency" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="daily">Daily</SelectItem>
+                <SelectItem value="weekly">Weekly</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input 
+              type="time"
+              value={workflowTime}
+              onChange={(e) => setWorkflowTime(e.target.value)}
+            />
+          </div>
+          
+          {workflowSchedule === 'custom' && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                <Button
+                  key={day}
+                  variant={workflowDays.includes(day) ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleDaySelection(day)}
+                >
+                  {day.slice(0, 3)}
+                </Button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Notification Settings */}
         <div className="flex items-center justify-between pt-4 border-t">
           <div className="space-y-0.5">
@@ -194,7 +258,7 @@ export const ScheduledTasks = () => {
           </div>
           <Switch
             checked={emailNotifications}
-            onCheckedChange={handleNotificationToggle}
+            onCheckedChange={setEmailNotifications}
           />
         </div>
 
