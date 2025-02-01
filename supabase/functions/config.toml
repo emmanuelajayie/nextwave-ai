@@ -1,4 +1,3 @@
 project_id = "zpxciicizzdyxqqnixra"
-
-[process-scheduled-tasks]
-verify_jwt = false
+[functions.sync-crm-data]
+verify_jwt = true
