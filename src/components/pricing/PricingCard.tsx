@@ -11,7 +11,6 @@ interface PricingCardProps {
   title: string;
   description: string;
   price: string;
-  setupFee: string;
   features: PricingFeature[];
   onSelect: () => void;
   popular?: boolean;
@@ -21,7 +20,6 @@ export const PricingCard = ({
   title,
   description,
   price,
-  setupFee,
   features,
   onSelect,
   popular = false,
@@ -40,7 +38,6 @@ export const PricingCard = ({
       <div className="mb-6">
         <div className="flex flex-col gap-2">
           <span className="text-3xl font-bold">{price}</span>
-          <span className="text-sm text-muted-foreground">+ {setupFee} one-time setup fee</span>
         </div>
       </div>
       <ul className="space-y-3 mb-6">
@@ -52,7 +49,7 @@ export const PricingCard = ({
         ))}
       </ul>
       <Button onClick={onSelect} className="w-full" variant={popular ? "default" : "outline"}>
-        Get Started
+        Contact Sales
       </Button>
     </Card>
   );
