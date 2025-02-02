@@ -19,29 +19,36 @@ export const AdminSettings = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          console.error("Auth error:", authError);
+          return;
+        }
+
+        const { data: teamMembers, error } = await supabase
+          .from('team_members')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (error) {
+          console.error("Error checking admin status:", error);
+          return;
+        }
+
+        setIsAdmin(!!teamMembers);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+
     checkAdminStatus();
     fetchSettings();
   }, []);
-
-  const checkAdminStatus = async () => {
-    try {
-      const { data: teamMembers, error } = await supabase
-        .from('team_members')
-        .select('role')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .eq('role', 'admin')
-        .single();
-
-      if (error) {
-        console.error("Error checking admin status:", error);
-        return;
-      }
-
-      setIsAdmin(!!teamMembers);
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  };
 
   const fetchSettings = async () => {
     try {

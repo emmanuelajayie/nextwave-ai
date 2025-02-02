@@ -3,12 +3,36 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { RefreshCw, Database, Brain, Power } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation } from "@tanstack/react-query";
 
 export const AutomationSettings = () => {
   const [masterAutomation, setMasterAutomation] = useState(false);
+
+  // Ensure workflow exists
+  useEffect(() => {
+    const createWorkflowIfNeeded = async () => {
+      const { data, error } = await supabase
+        .from('workflows')
+        .select('id')
+        .eq('name', 'Automated Tasks')
+        .maybeSingle();
+
+      if (!data && !error) {
+        // Create default workflow if it doesn't exist
+        await supabase
+          .from('workflows')
+          .insert({
+            name: 'Automated Tasks',
+            status: 'inactive',
+            config: {}
+          });
+      }
+    };
+
+    createWorkflowIfNeeded();
+  }, []);
 
   // Fetch current automation status
   const { data: workflows } = useQuery({
@@ -19,7 +43,7 @@ export const AutomationSettings = () => {
         .from('workflows')
         .select('status')
         .eq('name', 'Automated Tasks')
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error fetching automation status:', error);
