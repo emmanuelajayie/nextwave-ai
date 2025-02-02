@@ -1,5 +1,4 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { google } from 'https://deno.land/x/google_auth@v1.0.0/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,31 +29,43 @@ Deno.serve(async (req) => {
 
     console.log('Starting CRM data sync process...');
 
-    // Get active CRM integrations
+    // Get active CRM integrations with proper error handling
     const { data: integrations, error: fetchError } = await supabase
       .from('crm_integrations')
-      .select('*')
+      .select('*, teams!inner(*)')
       .eq('status', 'active');
 
-    if (fetchError) throw fetchError;
+    if (fetchError) {
+      console.error('Error fetching integrations:', fetchError);
+      throw fetchError;
+    }
 
+    if (!integrations?.length) {
+      console.log('No active integrations found');
+      return new Response(
+        JSON.stringify({ message: 'No active integrations found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const results = [];
     for (const integration of integrations) {
       console.log(`Processing integration: ${integration.name}`);
 
-      // Create sync log entry
-      const { data: syncLog, error: logError } = await supabase
-        .from('sync_logs')
-        .insert({
-          crm_integration_id: integration.id,
-          destination: integration.sync_destination,
-        })
-        .select()
-        .single();
-
-      if (logError) throw logError;
-
       try {
-        // Fetch data from CRM in batches
+        // Create sync log entry with proper error handling
+        const { data: syncLog, error: logError } = await supabase
+          .from('sync_logs')
+          .insert({
+            crm_integration_id: integration.id,
+            destination: integration.sync_destination,
+          })
+          .select()
+          .single();
+
+        if (logError) throw logError;
+
+        // Fetch and process CRM data
         const data = await fetchCRMData(integration);
         
         // Store data based on destination preference
@@ -64,7 +75,7 @@ Deno.serve(async (req) => {
           await syncToExcel(data, integration);
         }
 
-        // Update sync log
+        // Update sync status
         await supabase
           .from('sync_logs')
           .update({
@@ -74,7 +85,7 @@ Deno.serve(async (req) => {
           })
           .eq('id', syncLog.id);
 
-        // Update last sync timestamp
+        // Update integration last sync
         await supabase
           .from('crm_integrations')
           .update({
@@ -82,22 +93,24 @@ Deno.serve(async (req) => {
           })
           .eq('id', integration.id);
 
+        results.push({
+          integration: integration.name,
+          status: 'success',
+          records_processed: data.length,
+        });
+
       } catch (error) {
         console.error(`Error processing integration ${integration.id}:`, error);
-        
-        await supabase
-          .from('sync_logs')
-          .update({
-            status: 'failed',
-            error_message: error.message,
-            completed_at: new Date().toISOString(),
-          })
-          .eq('id', syncLog.id);
+        results.push({
+          integration: integration.name,
+          status: 'error',
+          error: error.message,
+        });
       }
     }
 
     return new Response(
-      JSON.stringify({ message: 'CRM sync process completed' }),
+      JSON.stringify({ message: 'CRM sync process completed', results }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
@@ -116,23 +129,19 @@ Deno.serve(async (req) => {
 async function fetchCRMData(integration: CRMIntegration) {
   console.log(`Fetching data from ${integration.crm_type} CRM...`);
   
-  // Implement CRM-specific data fetching logic
   switch (integration.crm_type) {
     case 'hubspot':
       // Implement HubSpot API calls
-      break;
+      return [];
     case 'salesforce':
       // Implement Salesforce API calls
-      break;
+      return [];
     case 'zoho':
       // Implement Zoho API calls
-      break;
+      return [];
     default:
       throw new Error(`Unsupported CRM type: ${integration.crm_type}`);
   }
-
-  // Placeholder return
-  return [];
 }
 
 async function syncToGoogleSheets(data: any[], integration: CRMIntegration) {
