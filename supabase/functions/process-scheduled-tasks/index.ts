@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
     // Get all active workflows
     const { data: workflows, error: workflowsError } = await supabase
       .from('workflows')
-      .select('*')
+      .select('*, team_members!inner(*)')
       .eq('status', 'active')
 
     if (workflowsError) {
