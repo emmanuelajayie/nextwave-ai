@@ -8,12 +8,8 @@ const corsHeaders = {
 interface CRMIntegration {
   id: string;
   crm_type: string;
-  api_key: string;
-  sync_destination: string;
-  sheets_config: any;
-  excel_config: any;
-  batch_size: number;
-  last_processed_record_id: string;
+  oauth_data: any;
+  last_sync_at: string;
 }
 
 Deno.serve(async (req) => {
@@ -29,10 +25,10 @@ Deno.serve(async (req) => {
 
     console.log('Starting CRM data sync process...');
 
-    // Get active CRM integrations with proper error handling
+    // Get active CRM integrations
     const { data: integrations, error: fetchError } = await supabase
       .from('crm_integrations')
-      .select('*, teams!inner(*)')
+      .select('*')
       .eq('status', 'active');
 
     if (fetchError) {
@@ -50,15 +46,15 @@ Deno.serve(async (req) => {
 
     const results = [];
     for (const integration of integrations) {
-      console.log(`Processing integration: ${integration.name}`);
+      console.log(`Processing integration: ${integration.name} (${integration.crm_type})`);
 
       try {
-        // Create sync log entry with proper error handling
+        // Create sync log entry
         const { data: syncLog, error: logError } = await supabase
           .from('sync_logs')
           .insert({
             crm_integration_id: integration.id,
-            destination: integration.sync_destination,
+            status: 'in_progress'
           })
           .select()
           .single();
@@ -68,11 +64,20 @@ Deno.serve(async (req) => {
         // Fetch and process CRM data
         const data = await fetchCRMData(integration);
         
-        // Store data based on destination preference
-        if (integration.sync_destination === 'sheets') {
-          await syncToGoogleSheets(data, integration);
-        } else {
-          await syncToExcel(data, integration);
+        // Process the data with retries
+        let retryCount = 0;
+        const maxRetries = 3;
+        
+        while (retryCount < maxRetries) {
+          try {
+            await processCRMData(data, integration, supabase);
+            break;
+          } catch (error) {
+            retryCount++;
+            if (retryCount === maxRetries) throw error;
+            console.log(`Retry ${retryCount} for integration ${integration.id}`);
+            await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+          }
         }
 
         // Update sync status
@@ -129,27 +134,67 @@ Deno.serve(async (req) => {
 async function fetchCRMData(integration: CRMIntegration) {
   console.log(`Fetching data from ${integration.crm_type} CRM...`);
   
+  const accessToken = integration.oauth_data?.access_token;
+  if (!accessToken) {
+    throw new Error('No access token available');
+  }
+
   switch (integration.crm_type) {
     case 'hubspot':
-      // Implement HubSpot API calls
-      return [];
+      return await fetchHubSpotData(accessToken);
     case 'salesforce':
-      // Implement Salesforce API calls
-      return [];
+      return await fetchSalesforceData(accessToken);
     case 'zoho':
-      // Implement Zoho API calls
-      return [];
+      return await fetchZohoData(accessToken);
     default:
       throw new Error(`Unsupported CRM type: ${integration.crm_type}`);
   }
 }
 
-async function syncToGoogleSheets(data: any[], integration: CRMIntegration) {
-  console.log('Syncing data to Google Sheets...');
-  // Implement Google Sheets API integration
+async function processCRMData(data: any[], integration: CRMIntegration, supabase: any) {
+  console.log(`Processing ${data.length} records for ${integration.crm_type}`);
+  
+  // Validate data structure
+  const validationErrors = validateCRMData(data);
+  if (validationErrors.length > 0) {
+    throw new Error(`Data validation failed: ${validationErrors.join(', ')}`);
+  }
+
+  // Process in batches
+  const batchSize = 100;
+  for (let i = 0; i < data.length; i += batchSize) {
+    const batch = data.slice(i, i + batchSize);
+    await processBatch(batch, integration, supabase);
+  }
 }
 
-async function syncToExcel(data: any[], integration: CRMIntegration) {
-  console.log('Syncing data to Excel...');
-  // Implement Excel Online API integration
+function validateCRMData(data: any[]) {
+  const errors = [];
+  
+  for (const record of data) {
+    if (!record.id) errors.push('Missing ID');
+    if (!record.email && !record.phone) errors.push('Missing contact information');
+  }
+  
+  return errors;
+}
+
+async function processBatch(batch: any[], integration: CRMIntegration, supabase: any) {
+  // Implementation specific to each CRM type
+  console.log(`Processing batch of ${batch.length} records`);
+}
+
+async function fetchHubSpotData(accessToken: string) {
+  // Implement HubSpot API calls
+  return [];
+}
+
+async function fetchSalesforceData(accessToken: string) {
+  // Implement Salesforce API calls
+  return [];
+}
+
+async function fetchZohoData(accessToken: string) {
+  // Implement Zoho API calls
+  return [];
 }
