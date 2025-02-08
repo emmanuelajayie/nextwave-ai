@@ -1,23 +1,25 @@
+
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const CRM_CONFIGS = {
   hubspot: {
     name: "HubSpot",
     authUrl: "https://app.hubspot.com/oauth/authorize",
-    clientId: import.meta.env.VITE_HUBSPOT_CLIENT_ID || "",
+    clientId: import.meta.env.VITE_HUBSPOT_CLIENT_ID,
     scopes: ["contacts", "crm.objects.contacts.read", "crm.objects.contacts.write"],
   },
   zoho: {
     name: "Zoho",
     authUrl: "https://accounts.zoho.com/oauth/v2/auth",
-    clientId: import.meta.env.VITE_ZOHO_CLIENT_ID || "",
+    clientId: import.meta.env.VITE_ZOHO_CLIENT_ID,
     scopes: ["ZohoCRM.modules.ALL", "ZohoCRM.settings.ALL"],
   },
   salesforce: {
     name: "Salesforce",
     authUrl: "https://login.salesforce.com/services/oauth2/authorize",
-    clientId: import.meta.env.VITE_SALESFORCE_CLIENT_ID || "",
+    clientId: import.meta.env.VITE_SALESFORCE_CLIENT_ID,
     scopes: ["api", "refresh_token"],
   },
 };
@@ -33,7 +35,7 @@ export const CRMOAuthButtons = () => {
 
     if (!config.clientId) {
       console.error(`${config.name} client ID not configured`);
-      toast.error(`${config.name} client ID not configured. Please check your environment variables.`);
+      toast.error(`${config.name} client ID not configured in your environment variables.`);
       return;
     }
 
@@ -41,12 +43,27 @@ export const CRMOAuthButtons = () => {
       // Generate state parameter for security
       const state = crypto.randomUUID();
       
-      // Store state in localStorage for verification
-      localStorage.setItem("crm_oauth_state", state);
-      localStorage.setItem("crm_type", crmType);
+      // First, create a record in crm_integrations table with pending status
+      const { error: dbError } = await supabase
+        .from("crm_integrations")
+        .insert({
+          crm_type: crmType,
+          status: "pending",
+          oauth_data: {
+            state,
+            created_at: new Date().toISOString(),
+            status: "pending"
+          }
+        });
 
-      // Construct redirect URI - use window.location.origin to handle different environments
-      const redirectUri = `${window.location.origin}/api/crm/oauth/callback`;
+      if (dbError) {
+        console.error("Error creating integration record:", dbError);
+        toast.error("Failed to initialize OAuth flow. Please try again.");
+        return;
+      }
+
+      // Construct redirect URI using window.location.origin
+      const redirectUri = `${window.location.origin}/api/crm/oauth/callback?crm_type=${crmType}`;
       console.log("Redirect URI:", redirectUri);
 
       // Construct authorization URL with all required parameters
