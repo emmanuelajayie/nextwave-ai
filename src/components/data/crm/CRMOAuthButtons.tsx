@@ -48,6 +48,7 @@ export const CRMOAuthButtons = () => {
         .from("crm_integrations")
         .insert({
           crm_type: crmType,
+          name: `${config.name} Integration`,
           status: "pending",
           oauth_data: {
             state,
