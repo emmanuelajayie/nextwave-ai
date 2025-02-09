@@ -2,10 +2,10 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "sonner";
-import { BusinessType, SetupFee } from "@/types/payment";
+import { toast } from "sonner";
+import { BusinessType } from "@/types/payment";
 import { supabase } from "@/lib/supabase";
-import { Building, Building2, Buildings } from "lucide-react";
+import { Building, Building2 } from "lucide-react";
 
 const businessTypeInfo = {
   small: {
@@ -19,15 +19,14 @@ const businessTypeInfo = {
     description: "Ideal for growing companies",
   },
   enterprise: {
-    title: "Enterprise",
-    icon: Buildings,
+    title: "Mid-Sized Business",
+    icon: Building,
     description: "For large organizations with complex needs",
   },
 };
 
 export const BusinessTypeSelect = () => {
   const [loading, setLoading] = useState(false);
-  const toast = useToast();
 
   const handleSelectBusinessType = async (type: BusinessType) => {
     try {
