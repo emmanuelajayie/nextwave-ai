@@ -51,6 +51,12 @@ export const ScheduledTasks = () => {
   const { mutate: updateWorkflow, isPending } = useMutation({
     mutationFn: async () => {
       console.log('Updating workflow configuration...');
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User must be authenticated to update workflows");
+      }
+
       const workflowData = {
         name: 'Automated Tasks',
         config: {
@@ -72,6 +78,7 @@ export const ScheduledTasks = () => {
           },
         },
         status: 'active',
+        created_by: user.id
       };
 
       const { data, error } = await supabase

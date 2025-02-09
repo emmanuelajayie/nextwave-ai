@@ -13,6 +13,9 @@ export const AutomationSettings = () => {
   // Ensure workflow exists
   useEffect(() => {
     const createWorkflowIfNeeded = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
       const { data, error } = await supabase
         .from('workflows')
         .select('id')
@@ -26,7 +29,8 @@ export const AutomationSettings = () => {
           .insert({
             name: 'Automated Tasks',
             status: 'inactive',
-            config: {}
+            config: {},
+            created_by: user.id
           });
       }
     };
