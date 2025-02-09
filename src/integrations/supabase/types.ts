@@ -188,39 +188,72 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          business_type: string | null
           created_at: string | null
           currency: string
           id: string
           metadata: Json | null
           payment_type: Database["public"]["Enums"]["payment_type"]
+          plan_id: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
+          subscription_status: string | null
           transaction_ref: string
+          trial_end_date: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           amount: number
+          business_type?: string | null
           created_at?: string | null
           currency?: string
           id?: string
           metadata?: Json | null
           payment_type: Database["public"]["Enums"]["payment_type"]
+          plan_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          subscription_status?: string | null
           transaction_ref: string
+          trial_end_date?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           amount?: number
+          business_type?: string | null
           created_at?: string | null
           currency?: string
           id?: string
           metadata?: Json | null
           payment_type?: Database["public"]["Enums"]["payment_type"]
+          plan_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
+          subscription_status?: string | null
           transaction_ref?: string
+          trial_end_date?: string | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      setup_fees: {
+        Row: {
+          amount: number
+          business_type: string
+          created_at: string | null
+          payment_link: string
+        }
+        Insert: {
+          amount: number
+          business_type: string
+          created_at?: string | null
+          payment_link: string
+        }
+        Update: {
+          amount?: number
+          business_type?: string
+          created_at?: string | null
+          payment_link?: string
         }
         Relationships: []
       }
@@ -258,6 +291,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      subscription_plans: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          features: Json | null
+          id: string
+          name: string
+          price: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id: string
+          name: string
+          price: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          features?: Json | null
+          id?: string
+          name?: string
+          price?: number
+        }
+        Relationships: []
       }
       team_members: {
         Row: {

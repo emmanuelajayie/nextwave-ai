@@ -54,7 +54,7 @@ serve(async (req) => {
       throw new Error(flutterwaveData.message || "Failed to verify payment");
     }
 
-    // Update payment status in database
+    // Update payment status and start trial if applicable
     const { data: payment, error: updateError } = await supabaseClient
       .from("payments")
       .update({
@@ -64,6 +64,7 @@ serve(async (req) => {
           flw_ref: flutterwaveData.data.flw_ref,
           processor_response: flutterwaveData.data.processor_response,
         },
+        subscription_status: flutterwaveData.data.status === "successful" ? "trial" : "inactive",
       })
       .eq("transaction_ref", reference)
       .select()
@@ -73,11 +74,17 @@ serve(async (req) => {
       throw new Error("Failed to update payment status");
     }
 
+    // If payment is successful, log it
+    if (flutterwaveData.data.status === "successful") {
+      console.log(`Payment successful for reference: ${reference}. Starting trial period.`);
+    }
+
     return new Response(
       JSON.stringify({ data: payment }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error("Payment verification error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }

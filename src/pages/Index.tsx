@@ -1,3 +1,4 @@
+
 import MainLayout from "@/components/layout/MainLayout";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
@@ -10,10 +11,38 @@ import { TeamManagement } from "@/components/collaboration/TeamManagement";
 import { ExportOptions } from "@/components/exports/ExportOptions";
 import { ScheduledTasks } from "@/components/automation/ScheduledTasks";
 import { FileStorage } from "@/components/storage/FileStorage";
+import { BusinessTypeSelect } from "@/components/onboarding/BusinessTypeSelect";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 const Index = () => {
-  console.log("Rendering Index page");
-  
+  const { data: payments } = useQuery({
+    queryKey: ['payments'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      return data;
+    },
+  });
+
+  // Show business type selection if no payments exist
+  if (!payments) {
+    return (
+      <MainLayout>
+        <BusinessTypeSelect />
+      </MainLayout>
+    );
+  }
+
   return (
     <MainLayout>
       <div className="space-y-6">

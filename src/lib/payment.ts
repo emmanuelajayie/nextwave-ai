@@ -1,6 +1,7 @@
 
 import { PaymentDetails, Payment } from "@/types/payment";
 import { supabase } from "@/lib/supabase";
+import { addDays } from "date-fns";
 
 export class PaymentService {
   private static async initializeTransaction(details: PaymentDetails): Promise<{ url: string; reference: string }> {
@@ -44,6 +45,10 @@ export class PaymentService {
         currency: details.currency,
         payment_type: details.payment_type,
         metadata: details.metadata,
+        business_type: details.business_type,
+        plan_id: details.plan_id,
+        trial_end_date: details.payment_type === 'subscription' ? addDays(new Date(), 7) : null,
+        subscription_status: details.payment_type === 'subscription' ? 'trial' : 'inactive'
       });
 
     if (error) {
