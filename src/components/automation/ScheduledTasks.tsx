@@ -1,20 +1,14 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
-import { Clock, Send, BarChart, Loader2, Workflow } from "lucide-react";
+import { Clock, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { AnalyticsSection } from "./sections/AnalyticsSection";
+import { ReportsSection } from "./sections/ReportsSection";
+import { WorkflowSection } from "./sections/WorkflowSection";
+import { useWorkflow } from "@/hooks/useWorkflow";
 
 export const ScheduledTasks = () => {
   const [emailNotifications, setEmailNotifications] = useState(false);
@@ -26,81 +20,7 @@ export const ScheduledTasks = () => {
   const [workflowTime, setWorkflowTime] = useState("");
   const [workflowDays, setWorkflowDays] = useState<string[]>([]);
 
-  // Fetch existing workflow configuration
-  const { data: workflows, isLoading } = useQuery({
-    queryKey: ['workflows'],
-    queryFn: async () => {
-      console.log('Fetching workflows...');
-      const { data, error } = await supabase
-        .from('workflows')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (error) {
-        console.error('Error fetching workflows:', error);
-        throw error;
-      }
-
-      console.log('Fetched workflows:', data);
-      return data;
-    }
-  });
-
-  // Update workflow configuration
-  const { mutate: updateWorkflow, isPending } = useMutation({
-    mutationFn: async () => {
-      console.log('Updating workflow configuration...');
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error("User must be authenticated to update workflows");
-      }
-
-      const workflowData = {
-        name: 'Automated Tasks',
-        config: {
-          analytics: {
-            schedule: analyticsSchedule,
-            time: analyticsTime,
-          },
-          reports: {
-            schedule: reportsSchedule,
-            time: reportsTime,
-          },
-          workflow: {
-            schedule: workflowSchedule,
-            time: workflowTime,
-            days: workflowDays,
-          },
-          notifications: {
-            email: emailNotifications,
-          },
-        },
-        status: 'active',
-        created_by: user.id
-      };
-
-      const { data, error } = await supabase
-        .from('workflows')
-        .upsert(workflowData)
-        .select();
-
-      if (error) {
-        console.error('Error updating workflow:', error);
-        throw error;
-      }
-
-      return data;
-    },
-    onSuccess: () => {
-      toast.success('Schedule settings saved successfully');
-    },
-    onError: (error) => {
-      console.error('Error saving schedule:', error);
-      toast.error('Failed to save schedule settings');
-    },
-  });
+  const { workflows, isLoading, updateWorkflow, isPending } = useWorkflow();
 
   // Handle schedule changes
   const handleScheduleChange = (value: string, type: 'analytics' | 'reports' | 'workflow') => {
@@ -127,6 +47,28 @@ export const ScheduledTasks = () => {
     );
   };
 
+  const handleSubmit = () => {
+    const config = {
+      analytics: {
+        schedule: analyticsSchedule,
+        time: analyticsTime,
+      },
+      reports: {
+        schedule: reportsSchedule,
+        time: reportsTime,
+      },
+      workflow: {
+        schedule: workflowSchedule,
+        time: workflowTime,
+        days: workflowDays,
+      },
+      notifications: {
+        email: emailNotifications,
+      },
+    };
+    updateWorkflow(config);
+  };
+
   if (isLoading) {
     return (
       <Card className="p-6">
@@ -141,121 +83,29 @@ export const ScheduledTasks = () => {
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Scheduled Tasks</h2>
       <div className="space-y-6">
-        {/* Analytics Schedule */}
-        <div className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <BarChart className="h-5 w-5 text-primary" />
-            <div>
-              <Label>Analytics Process</Label>
-              <p className="text-sm text-muted-foreground">
-                Schedule automated analytics runs
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Select 
-              value={analyticsSchedule} 
-              onValueChange={(value) => handleScheduleChange(value, 'analytics')}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select frequency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input 
-              type="time" 
-              value={analyticsTime}
-              onChange={(e) => setAnalyticsTime(e.target.value)}
-            />
-          </div>
-        </div>
+        <AnalyticsSection
+          schedule={analyticsSchedule}
+          time={analyticsTime}
+          onScheduleChange={(value) => handleScheduleChange(value, 'analytics')}
+          onTimeChange={setAnalyticsTime}
+        />
 
-        {/* Report Schedule */}
-        <div className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <Send className="h-5 w-5 text-primary" />
-            <div>
-              <Label>Report Delivery</Label>
-              <p className="text-sm text-muted-foreground">
-                Schedule automated report sending
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Select 
-              value={reportsSchedule}
-              onValueChange={(value) => handleScheduleChange(value, 'reports')}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select frequency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="monthly">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input 
-              type="time"
-              value={reportsTime}
-              onChange={(e) => setReportsTime(e.target.value)}
-            />
-          </div>
-        </div>
+        <ReportsSection
+          schedule={reportsSchedule}
+          time={reportsTime}
+          onScheduleChange={(value) => handleScheduleChange(value, 'reports')}
+          onTimeChange={setReportsTime}
+        />
 
-        {/* Workflow Schedule */}
-        <div className="space-y-4">
-          <div className="flex items-center space-x-4">
-            <Workflow className="h-5 w-5 text-primary" />
-            <div>
-              <Label>Full Workflow</Label>
-              <p className="text-sm text-muted-foreground">
-                Schedule complete workflow execution
-              </p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Select 
-              value={workflowSchedule}
-              onValueChange={(value) => handleScheduleChange(value, 'workflow')}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select frequency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="daily">Daily</SelectItem>
-                <SelectItem value="weekly">Weekly</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-            <Input 
-              type="time"
-              value={workflowTime}
-              onChange={(e) => setWorkflowTime(e.target.value)}
-            />
-          </div>
-          
-          {workflowSchedule === 'custom' && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                <Button
-                  key={day}
-                  variant={workflowDays.includes(day) ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleDaySelection(day)}
-                >
-                  {day.slice(0, 3)}
-                </Button>
-              ))}
-            </div>
-          )}
-        </div>
+        <WorkflowSection
+          schedule={workflowSchedule}
+          time={workflowTime}
+          days={workflowDays}
+          onScheduleChange={(value) => handleScheduleChange(value, 'workflow')}
+          onTimeChange={setWorkflowTime}
+          onDaySelection={handleDaySelection}
+        />
 
-        {/* Notification Settings */}
         <div className="flex items-center justify-between pt-4 border-t">
           <div className="space-y-0.5">
             <Label>Email Notifications</Label>
@@ -271,7 +121,7 @@ export const ScheduledTasks = () => {
 
         <Button 
           className="w-full" 
-          onClick={() => updateWorkflow()}
+          onClick={handleSubmit}
           disabled={isPending}
         >
           {isPending ? (
