@@ -185,6 +185,45 @@ export type Database = {
         }
         Relationships: []
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          id: string
+          metadata: Json | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          status: Database["public"]["Enums"]["payment_status"] | null
+          transaction_ref: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payment_type: Database["public"]["Enums"]["payment_type"]
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          transaction_ref: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          metadata?: Json | null
+          payment_type?: Database["public"]["Enums"]["payment_type"]
+          status?: Database["public"]["Enums"]["payment_status"] | null
+          transaction_ref?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       shared_resources: {
         Row: {
           created_at: string | null
@@ -326,6 +365,8 @@ export type Database = {
     }
     Enums: {
       crm_type: "hubspot" | "zoho" | "salesforce" | "custom"
+      payment_status: "pending" | "successful" | "failed" | "cancelled"
+      payment_type: "one_time" | "subscription"
     }
     CompositeTypes: {
       [_ in never]: never
