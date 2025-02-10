@@ -34,17 +34,9 @@ const Index = () => {
     },
   });
 
-  // Show business type selection if no payments exist
-  if (!payments) {
-    return (
-      <MainLayout>
-        <BusinessTypeSelect />
-      </MainLayout>
-    );
-  }
-
   return (
     <MainLayout>
+      {!payments && <BusinessTypeSelect />}
       <div className="space-y-6">
         <DashboardHeader />
         <FileStorage />
