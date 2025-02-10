@@ -2,7 +2,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Json } from "@/integrations/supabase/types";
 
 export interface WorkflowConfig {
   analytics: {
@@ -57,7 +56,7 @@ export const useWorkflow = () => {
 
       const workflowData = {
         name: 'Automated Tasks',
-        config: config as Json, // Type cast the config to Json type
+        config: JSON.parse(JSON.stringify(config)), // Convert WorkflowConfig to a plain object
         status: 'active',
         created_by: user.id
       };

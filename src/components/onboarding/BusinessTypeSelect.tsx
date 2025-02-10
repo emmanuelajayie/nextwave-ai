@@ -19,7 +19,7 @@ const businessTypeInfo = {
     description: "Ideal for growing companies",
   },
   enterprise: {
-    title: "Mid-Sized Business",
+    title: "Enterprise",
     icon: Building,
     description: "For large organizations with complex needs",
   },
