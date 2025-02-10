@@ -236,6 +236,33 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          business_size: string
+          company_name: string
+          created_at: string
+          employee_count: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          business_size: string
+          company_name: string
+          created_at?: string
+          employee_count: number
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          business_size?: string
+          company_name?: string
+          created_at?: string
+          employee_count?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       setup_fees: {
         Row: {
           amount: number
