@@ -27,10 +27,12 @@ const businessTypeInfo = {
 
 export const BusinessTypeSelect = () => {
   const [loading, setLoading] = useState(false);
+  const [selectedType, setSelectedType] = useState<BusinessType | null>(null);
 
   const handleSelectBusinessType = async (type: BusinessType) => {
     try {
       setLoading(true);
+      setSelectedType(type);
       
       const { data: setupFee, error } = await supabase
         .from("setup_fees")
@@ -38,9 +40,18 @@ export const BusinessTypeSelect = () => {
         .eq("business_type", type)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching setup fee:", error);
+        toast.error("Failed to retrieve payment information. Please try again.");
+        return;
+      }
 
-      // Redirect to Flutterwave payment page
+      if (!setupFee) {
+        toast.error("Payment information not found for this business type.");
+        return;
+      }
+
+      // Redirect to payment link
       window.location.href = setupFee.payment_link;
     } catch (error) {
       console.error("Error:", error);
@@ -64,10 +75,10 @@ export const BusinessTypeSelect = () => {
                 <p className="text-muted-foreground">{description}</p>
                 <Button
                   onClick={() => handleSelectBusinessType(type)}
-                  disabled={loading}
+                  disabled={loading && selectedType === type}
                   className="w-full"
                 >
-                  Select & Continue
+                  {loading && selectedType === type ? "Processing..." : "Select & Continue"}
                 </Button>
               </div>
             </Card>
