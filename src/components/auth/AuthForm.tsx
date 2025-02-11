@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -201,8 +200,8 @@ export const AuthForm = ({ onSignUpSuccess }: AuthFormProps) => {
                   maxLength={6}
                   render={({ slots }) => (
                     <InputOTPGroup className="gap-2">
-                      {slots.map((slot, index) => (
-                        <InputOTPSlot key={index} {...slot} />
+                      {slots.map((slot, i) => (
+                        <InputOTPSlot key={i} {...slot} index={i} />
                       ))}
                     </InputOTPGroup>
                   )}
