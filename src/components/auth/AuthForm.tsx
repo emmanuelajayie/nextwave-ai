@@ -7,6 +7,7 @@ import { Phone, Mail } from "lucide-react";
 import { EmailAuthForm } from "./EmailAuthForm";
 import { PhoneAuthForm } from "./PhoneAuthForm";
 import { GoogleAuthButton } from "./GoogleAuthButton";
+import { GithubAuthButton } from "./GithubAuthButton";
 
 interface AuthFormProps {
   onSignUpSuccess: (email: string) => void;
@@ -22,9 +23,12 @@ export const AuthForm = ({ onSignUpSuccess }: AuthFormProps) => {
         <h2 className="text-2xl font-bold">{isSignUp ? "Create Account" : "Sign In"}</h2>
       </div>
 
-      <GoogleAuthButton />
+      <div className="space-y-2">
+        <GoogleAuthButton />
+        <GithubAuthButton />
+      </div>
 
-      <div className="relative mb-4">
+      <div className="relative my-4">
         <Separator />
         <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white px-2 text-sm text-gray-500">
           Or continue with
