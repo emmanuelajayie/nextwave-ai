@@ -7,16 +7,27 @@ import { Github } from "lucide-react";
 export const GithubAuthButton = () => {
   const handleGithubAuth = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log("Starting GitHub authentication...");
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth`
+          redirectTo: `${window.location.origin}/auth`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("GitHub auth error:", error);
+        throw error;
+      }
+
+      console.log("GitHub auth response:", data);
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("GitHub auth error details:", error);
+      toast.error(error.message || "Failed to connect to GitHub");
     }
   };
 
