@@ -24,14 +24,14 @@ const PaymentCallback = () => {
         }
 
         console.log("Verifying payment reference:", reference);
-        const { data, status, message } = await PaymentService.verifyPayment(reference);
+        const { payment, status: paymentStatus, message } = await PaymentService.verifyPayment(reference);
         
-        if (status === "successful") {
+        if (paymentStatus === "successful") {
           setStatus("success");
           toast.success(message || "Payment successful!");
           
           // If this was a subscription payment, update UI accordingly
-          if (data?.payment_type === "subscription") {
+          if (payment?.payment_type === "subscription") {
             toast.success("Your subscription is now active!");
           }
         } else {

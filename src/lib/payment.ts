@@ -59,7 +59,7 @@ export class PaymentService {
     return { url, reference };
   }
 
-  static async verifyPayment(reference: string): Promise<Payment> {
+  static async verifyPayment(reference: string): Promise<{ payment: Payment; status: string; message: string }> {
     try {
       const response = await fetch(`/api/payment/verify/${reference}`, {
         method: "GET",
@@ -69,8 +69,12 @@ export class PaymentService {
         throw new Error("Failed to verify payment");
       }
 
-      const { data } = await response.json();
-      return data;
+      const result = await response.json();
+      return {
+        payment: result.data,
+        status: result.status,
+        message: result.message
+      };
     } catch (error) {
       console.error("Payment verification error:", error);
       throw error;
