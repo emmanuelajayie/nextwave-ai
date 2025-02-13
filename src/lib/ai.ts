@@ -1,3 +1,4 @@
+
 import { toast } from "sonner";
 
 interface PredictionRequest {
@@ -22,21 +23,25 @@ interface TrendAnalysisResponse {
 export const generatePrediction = async (params: PredictionRequest): Promise<PredictionResponse> => {
   try {
     console.log("Generating prediction with params:", params);
-    const response = await fetch("/api/ai/predict", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(params),
-    });
 
-    if (!response.ok) {
-      throw new Error("Failed to generate prediction");
-    }
+    // Simulated API call - replace with actual ML model API
+    await new Promise(resolve => setTimeout(resolve, 2000));
 
-    const data = await response.json();
-    console.log("Prediction response:", data);
-    return data;
+    // Simulated response
+    const response: PredictionResponse = {
+      prediction: params.modelType === "regression" ? 
+        [120, 145, 160, 180, 200] :
+        ["high", "medium", "low", "high", "medium"],
+      confidence: 0.89,
+      insights: [
+        "Strong correlation detected with seasonal patterns",
+        "Key influencing factors identified",
+        "Recommendation: Consider external variables"
+      ]
+    };
+
+    console.log("Prediction response:", response);
+    return response;
   } catch (error) {
     console.error("Error generating prediction:", error);
     toast.error("Failed to generate prediction");
@@ -48,18 +53,26 @@ export const analyzeTrends = async (data: number[]): Promise<TrendAnalysisRespon
   try {
     console.log("Analyzing trends with data:", data);
     
-    // Simple local trend analysis
-    const trend = data.slice(-2)[1] > data.slice(-2)[0] ? "increasing" : "decreasing";
-    const average = data.reduce((a, b) => a + b, 0) / data.length;
-    const forecast = data.map(val => val * 1.1); // Simple 10% growth forecast
+    // Simple trend analysis logic
+    const lastValue = data[data.length - 1];
+    const previousValue = data[data.length - 2];
+    const trend = lastValue > previousValue ? "increasing" : 
+                 lastValue < previousValue ? "decreasing" : "stable";
+    
+    // Calculate average change
+    const changes = data.slice(1).map((val, i) => val - data[i]);
+    const avgChange = changes.reduce((a, b) => a + b, 0) / changes.length;
+    
+    // Generate forecast using simple moving average
+    const forecast = data.map(val => val * (1 + avgChange / 100));
     
     return {
       trend,
       confidence: 0.85,
       insights: [
-        "Trend shows consistent pattern",
-        "Seasonal variations detected",
-        "Growth potential identified"
+        `${trend.charAt(0).toUpperCase() + trend.slice(1)} trend detected`,
+        `Average change: ${avgChange.toFixed(2)}%`,
+        "Consider seasonal variations in analysis"
       ],
       forecast
     };
