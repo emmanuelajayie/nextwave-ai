@@ -9,13 +9,13 @@ const corsHeaders = {
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
@@ -23,17 +23,19 @@ serve(async (req) => {
     );
 
     if (authError || !user) {
+      console.error("Auth error:", authError);
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const { amount, currency, payment_type, customer, metadata } = await req.json();
+    const { amount, currency, payment_type, customer, metadata, business_type, plan_id } = await req.json();
+    console.log("Initializing payment:", { amount, currency, payment_type, business_type, plan_id });
 
     const flutterwaveSecretKey = Deno.env.get("FLUTTERWAVE_SECRET_KEY");
     if (!flutterwaveSecretKey) {
-      throw new Error("Flutterwave secret key not configured");
+      throw new Error("Payment provider configuration missing");
     }
 
     // Generate a unique transaction reference
@@ -53,30 +55,69 @@ serve(async (req) => {
         payment_options: payment_type === "subscription" ? "card" : "card,ussd,bank_transfer",
         customer: {
           email: customer.email,
-          name: customer.name,
+          name: customer.name || user.email,
         },
-        meta: metadata,
+        meta: {
+          ...metadata,
+          user_id: user.id,
+          business_type,
+          plan_id,
+        },
         redirect_url: `${req.headers.get("origin")}/payment/callback`,
         customizations: {
-          title: "Your Payment",
+          title: business_type ? `${business_type} Business Setup` : "Payment",
           description: payment_type === "subscription" ? "Subscription Payment" : "One-time Payment",
         },
       }),
     });
 
     const data = await response.json();
+    console.log("Flutterwave initialization response:", data);
 
     if (!response.ok) {
       throw new Error(data.message || "Failed to initialize payment");
     }
 
+    // Create payment record in database
+    const { error: dbError } = await supabaseClient
+      .from("payments")
+      .insert({
+        user_id: user.id,
+        transaction_ref: tx_ref,
+        amount,
+        currency,
+        payment_type,
+        metadata: {
+          ...metadata,
+          flutterwave_response: data,
+        },
+        business_type,
+        plan_id,
+        trial_end_date: payment_type === "subscription" ? 
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : null,
+        subscription_status: payment_type === "subscription" ? "trial" : "inactive"
+      });
+
+    if (dbError) {
+      console.error("Error creating payment record:", dbError);
+      throw new Error("Failed to create payment record");
+    }
+
     return new Response(
-      JSON.stringify({ url: data.data.link, reference: tx_ref }),
+      JSON.stringify({ 
+        url: data.data.link, 
+        reference: tx_ref,
+        message: "Payment initialized successfully"
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
+    console.error("Payment initialization error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: "An error occurred during payment initialization"
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
