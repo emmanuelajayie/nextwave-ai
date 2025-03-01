@@ -2,3 +2,6 @@
 project_id = "zpxciicizzdyxqqnixra"
 [functions.sync-crm-data]
 verify_jwt = true
+
+[functions.crm-oauth-callback]
+verify_jwt = false
