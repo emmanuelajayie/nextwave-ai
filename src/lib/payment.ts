@@ -1,7 +1,7 @@
 
 import { PaymentDetails, Payment } from "@/types/payment";
 import { supabase } from "@/lib/supabase";
-import { addDays } from "date-fns";
+import { addDays, format } from "date-fns";
 
 export class PaymentService {
   private static async initializeTransaction(details: PaymentDetails): Promise<{ url: string; reference: string }> {
@@ -35,6 +35,11 @@ export class PaymentService {
     // Initialize the transaction with Flutterwave
     const { url, reference } = await this.initializeTransaction(details);
 
+    // Format trial end date as ISO string for Supabase
+    const trialEndDate = details.payment_type === 'subscription' 
+      ? addDays(new Date(), 7).toISOString() 
+      : null;
+
     // Create a record in our payments table
     const { error } = await supabase
       .from("payments")
@@ -47,7 +52,7 @@ export class PaymentService {
         metadata: details.metadata,
         business_type: details.business_type,
         plan_id: details.plan_id,
-        trial_end_date: details.payment_type === 'subscription' ? addDays(new Date(), 7) : null,
+        trial_end_date: trialEndDate,
         subscription_status: details.payment_type === 'subscription' ? 'trial' : 'inactive'
       });
 
