@@ -4,7 +4,7 @@ import { Navigate } from "react-router-dom";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { CompanyDetailsForm } from "@/components/auth/CompanyDetailsForm";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const Auth = () => {
   const [showCompanyDetails, setShowCompanyDetails] = useState(false);
