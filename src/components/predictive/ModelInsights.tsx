@@ -1,6 +1,7 @@
+
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { ChartLine, Loader2, ThumbsUp, ThumbsDown } from "lucide-react";
+import { ChartLine, Loader2, ThumbsUp, ThumbsDown, AlertCircle } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -9,10 +10,18 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  ReferenceLine,
 } from "recharts";
-import { analyzeTrends } from "@/lib/ai";
+import { analyzeTrends, getIndustryInsights } from "@/lib/ai";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const sampleData = [
   { name: "Jan", actual: 4000, predicted: 4400 },
@@ -33,39 +42,52 @@ export const ModelInsights = () => {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [trend, setTrend] = useState<string>("");
   const [accuracy, setAccuracy] = useState<number>(0);
+  const [anomalies, setAnomalies] = useState<number[]>([]);
+  const [selectedIndustry, setSelectedIndustry] = useState<"ecommerce" | "logistics" | "finance">("ecommerce");
+  const [industryInsights, setIndustryInsights] = useState<any>(null);
 
   useEffect(() => {
-    const fetchInsights = async () => {
-      try {
-        console.log("Fetching insights for data");
-        const result = await analyzeTrends(sampleData.map(d => d.actual));
-        console.log("Received insights:", result);
-        
-        // Calculate model accuracy
-        const mape = sampleData.reduce((acc, curr) => {
-          return acc + Math.abs((curr.actual - curr.predicted) / curr.actual);
-        }, 0) / sampleData.length * 100;
-        
-        setAccuracy(100 - mape);
-        setInsights(result.insights.map(text => ({
-          text,
-          confidence: Math.random() * 30 + 70 // Simulated confidence scores 70-100%
-        })));
-        setTrend(result.trend);
-      } catch (error) {
-        console.error("Error fetching insights:", error);
-        toast.error("Failed to analyze trends. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    fetchInsights(selectedIndustry);
+  }, [selectedIndustry]);
 
-    fetchInsights();
-  }, []);
+  const fetchInsights = async (industry: "ecommerce" | "logistics" | "finance") => {
+    setLoading(true);
+    try {
+      console.log(`Fetching insights for ${industry} industry`);
+      const result = await analyzeTrends(sampleData.map(d => d.actual), industry);
+      console.log("Received insights:", result);
+      
+      // Calculate model accuracy
+      const mape = sampleData.reduce((acc, curr) => {
+        return acc + Math.abs((curr.actual - curr.predicted) / curr.actual);
+      }, 0) / sampleData.length * 100;
+      
+      setAccuracy(100 - mape);
+      setInsights(result.insights.map(text => ({
+        text,
+        confidence: Math.random() * 30 + 70 // Simulated confidence scores 70-100%
+      })));
+      setTrend(result.trend);
+      setAnomalies(result.anomalies || []);
+
+      // Get industry specific insights
+      const industryData = await getIndustryInsights(industry);
+      setIndustryInsights(industryData);
+    } catch (error) {
+      console.error("Error fetching insights:", error);
+      toast.error("Failed to analyze trends. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFeedback = (insightIndex: number, isHelpful: boolean) => {
     console.log("Feedback received:", { insightIndex, isHelpful });
     toast.success("Thank you for your feedback! This helps improve our predictions.");
+  };
+
+  const handleIndustryChange = (value: "ecommerce" | "logistics" | "finance") => {
+    setSelectedIndustry(value);
   };
 
   return (
@@ -73,11 +95,23 @@ export const ModelInsights = () => {
       <div className="flex items-center gap-2 mb-6">
         <ChartLine className="h-5 w-5" />
         <h2 className="text-xl font-semibold">Model Insights</h2>
-        {!loading && (
-          <span className="ml-auto text-sm text-muted-foreground">
-            Model Accuracy: {accuracy.toFixed(1)}%
-          </span>
-        )}
+        <div className="ml-auto flex items-center gap-4">
+          <Select value={selectedIndustry} onValueChange={handleIndustryChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select industry" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ecommerce">E-commerce</SelectItem>
+              <SelectItem value="logistics">Logistics</SelectItem>
+              <SelectItem value="finance">Finance</SelectItem>
+            </SelectContent>
+          </Select>
+          {!loading && (
+            <span className="text-sm text-muted-foreground">
+              Model Accuracy: {accuracy.toFixed(1)}%
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="space-y-6">
@@ -100,6 +134,15 @@ export const ModelInsights = () => {
                 stroke="#82ca9d" 
                 name="Predicted"
               />
+              {anomalies.map((idx) => (
+                <ReferenceLine 
+                  key={`anomaly-${idx}`}
+                  x={sampleData[idx]?.name} 
+                  stroke="red"
+                  strokeDasharray="3 3"
+                  label={{ value: "Anomaly", position: "top" }}
+                />
+              ))}
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -155,11 +198,49 @@ export const ModelInsights = () => {
             ) : (
               <div className="text-sm text-gray-600">
                 <p className="font-medium">Current Trend: {trend}</p>
-                <ul className="list-disc list-inside space-y-1 mt-2">
-                  <li>Optimize pricing strategy based on predictions</li>
-                  <li>Monitor market conditions for potential shifts</li>
-                  <li>Adjust inventory levels according to forecast</li>
-                </ul>
+                {industryInsights && (
+                  <div className="mt-3">
+                    <h4 className="font-medium text-primary">{selectedIndustry.charAt(0).toUpperCase() + selectedIndustry.slice(1)} Insights</h4>
+                    <div className="mt-2 space-y-2">
+                      {selectedIndustry === "ecommerce" && (
+                        <>
+                          <p><span className="font-medium">Cart Abandonment:</span> {industryInsights.metrics.cartAbandonmentRate.toFixed(1)}%</p>
+                          <p><span className="font-medium">Conversion Rate:</span> {industryInsights.metrics.conversionRate.toFixed(1)}%</p>
+                        </>
+                      )}
+                      {selectedIndustry === "logistics" && (
+                        <>
+                          <p><span className="font-medium">On-Time Delivery:</span> {industryInsights.metrics.onTimeDeliveryRate.toFixed(1)}%</p>
+                          <p><span className="font-medium">Transit Time:</span> {industryInsights.metrics.averageTransitTime.toFixed(1)} days</p>
+                        </>
+                      )}
+                      {selectedIndustry === "finance" && (
+                        <>
+                          <p><span className="font-medium">ROI:</span> {industryInsights.metrics.returnOnInvestment.toFixed(1)}%</p>
+                          <p><span className="font-medium">Operating Margin:</span> {industryInsights.metrics.operatingMargin.toFixed(1)}%</p>
+                        </>
+                      )}
+                      <div className="mt-3">
+                        <h5 className="font-medium">Key Risks:</h5>
+                        <ul className="list-disc list-inside mt-1">
+                          {industryInsights.risks.map((risk: any, idx: number) => (
+                            <li key={idx} className="flex items-center gap-2">
+                              <span className={
+                                risk.level === "high" ? "text-red-500" : 
+                                risk.level === "medium" ? "text-amber-500" : 
+                                "text-green-500"
+                              }>
+                                <AlertCircle className="inline h-3 w-3 mr-1" />
+                                {risk.level.charAt(0).toUpperCase() + risk.level.slice(1)}:
+                              </span> 
+                              {risk.description}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
