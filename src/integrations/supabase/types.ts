@@ -75,6 +75,48 @@ export type Database = {
         }
         Relationships: []
       }
+      ecommerce_data: {
+        Row: {
+          average_order_value: number | null
+          cart_abandonment_rate: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          customer_acquisition_cost: number | null
+          date: string | null
+          id: string
+          mobile_usage_percentage: number | null
+          peak_hours: Json | null
+          return_rate: number | null
+          user_id: string | null
+        }
+        Insert: {
+          average_order_value?: number | null
+          cart_abandonment_rate?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          customer_acquisition_cost?: number | null
+          date?: string | null
+          id?: string
+          mobile_usage_percentage?: number | null
+          peak_hours?: Json | null
+          return_rate?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          average_order_value?: number | null
+          cart_abandonment_rate?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          customer_acquisition_cost?: number | null
+          date?: string | null
+          id?: string
+          mobile_usage_percentage?: number | null
+          peak_hours?: Json | null
+          return_rate?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       exports: {
         Row: {
           created_at: string | null
@@ -161,6 +203,96 @@ export type Database = {
         }
         Relationships: []
       }
+      finance_data: {
+        Row: {
+          asset_turnover: number | null
+          cash_flow_ratio: number | null
+          created_at: string | null
+          date: string | null
+          debt_to_equity: number | null
+          expenses: number | null
+          id: string
+          operating_margin: number | null
+          profit: number | null
+          return_on_investment: number | null
+          revenue: number | null
+          risks: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          asset_turnover?: number | null
+          cash_flow_ratio?: number | null
+          created_at?: string | null
+          date?: string | null
+          debt_to_equity?: number | null
+          expenses?: number | null
+          id?: string
+          operating_margin?: number | null
+          profit?: number | null
+          return_on_investment?: number | null
+          revenue?: number | null
+          risks?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          asset_turnover?: number | null
+          cash_flow_ratio?: number | null
+          created_at?: string | null
+          date?: string | null
+          debt_to_equity?: number | null
+          expenses?: number | null
+          id?: string
+          operating_margin?: number | null
+          profit?: number | null
+          return_on_investment?: number | null
+          revenue?: number | null
+          risks?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      logistics_data: {
+        Row: {
+          average_transit_time: number | null
+          created_at: string | null
+          date: string | null
+          fuel_efficiency: number | null
+          id: string
+          on_time_delivery_rate: number | null
+          return_processing_time: number | null
+          route_data: Json | null
+          user_id: string | null
+          warehouse_utilization: number | null
+          weather_affected_routes: Json | null
+        }
+        Insert: {
+          average_transit_time?: number | null
+          created_at?: string | null
+          date?: string | null
+          fuel_efficiency?: number | null
+          id?: string
+          on_time_delivery_rate?: number | null
+          return_processing_time?: number | null
+          route_data?: Json | null
+          user_id?: string | null
+          warehouse_utilization?: number | null
+          weather_affected_routes?: Json | null
+        }
+        Update: {
+          average_transit_time?: number | null
+          created_at?: string | null
+          date?: string | null
+          fuel_efficiency?: number | null
+          id?: string
+          on_time_delivery_rate?: number | null
+          return_processing_time?: number | null
+          route_data?: Json | null
+          user_id?: string | null
+          warehouse_utilization?: number | null
+          weather_affected_routes?: Json | null
+        }
+        Relationships: []
+      }
       "lovable Auth": {
         Row: {
           created_at: string
@@ -231,6 +363,48 @@ export type Database = {
           subscription_status?: string | null
           transaction_ref?: string
           trial_end_date?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      predictive_models: {
+        Row: {
+          created_at: string | null
+          data_source: string | null
+          id: string
+          industry: string | null
+          model_type: string
+          name: string
+          status: string | null
+          target_variable: string | null
+          training_progress: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          data_source?: string | null
+          id?: string
+          industry?: string | null
+          model_type: string
+          name: string
+          status?: string | null
+          target_variable?: string | null
+          training_progress?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          data_source?: string | null
+          id?: string
+          industry?: string | null
+          model_type?: string
+          name?: string
+          status?: string | null
+          target_variable?: string | null
+          training_progress?: number | null
           updated_at?: string | null
           user_id?: string | null
         }

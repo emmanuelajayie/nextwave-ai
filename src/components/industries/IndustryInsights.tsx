@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EcommerceInsights } from "./EcommerceInsights";
 import { LogisticsInsights } from "./LogisticsInsights";
 import { FinanceInsights } from "./FinanceInsights";
+import { DataSeeder } from "../data/DataSeeder";
 import { ShoppingCart, Truck, LineChart, Loader2 } from "lucide-react";
 
 export const IndustryInsights = () => {
@@ -12,11 +13,14 @@ export const IndustryInsights = () => {
 
   return (
     <Card className="p-6">
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold">Industry-Specific Analytics</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          Customize insights based on your industry
-        </p>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-xl font-semibold">Industry-Specific Analytics</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Customize insights based on your industry
+          </p>
+        </div>
+        <DataSeeder />
       </div>
 
       <Tabs 

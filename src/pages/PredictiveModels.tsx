@@ -1,5 +1,6 @@
 
 import { ModelBuilder } from "@/components/predictive/ModelBuilder";
+import { ModelTraining } from "@/components/predictive/ModelTraining";
 import { ModelPerformance } from "@/components/predictive/ModelPerformance";
 import { ModelTuning } from "@/components/predictive/ModelTuning";
 import { ModelInsights } from "@/components/predictive/ModelInsights";
@@ -14,7 +15,10 @@ const PredictiveModels = () => {
         <h1 className="text-3xl font-bold">Predictive Models</h1>
       </div>
       <div className="grid gap-6">
-        <ModelBuilder />
+        <div className="grid md:grid-cols-2 gap-6">
+          <ModelBuilder />
+          <ModelTraining />
+        </div>
         <div className="grid md:grid-cols-2 gap-6">
           <ModelPerformance />
           <ModelTuning />

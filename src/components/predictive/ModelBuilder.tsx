@@ -11,63 +11,49 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ChartLine, Database, Loader2 } from "lucide-react";
-import { generatePrediction } from "@/lib/ai";
+import { usePredictiveModel } from "@/hooks/usePredictiveModel";
 import { supabase } from "@/lib/supabase";
 
 export const ModelBuilder = () => {
-  const [loading, setLoading] = useState(false);
   const [selectedSource, setSelectedSource] = useState<string>("");
   const [modelType, setModelType] = useState<"regression" | "classification" | "clustering">("regression");
   const [target, setTarget] = useState<string>("");
-  const [progress, setProgress] = useState(0);
+  const [industry, setIndustry] = useState<"ecommerce" | "logistics" | "finance">("finance");
+  
+  const { 
+    isGenerating, 
+    progress, 
+    generatePrediction 
+  } = usePredictiveModel();
 
   const handleGenerateModel = async () => {
-    if (!selectedSource || !modelType) {
+    if (!selectedSource || !modelType || !target || !industry) {
       toast.error("Please select all required fields");
       return;
     }
 
-    setLoading(true);
-    setProgress(0);
-
     try {
-      // Log training start
-      const { error: logError } = await supabase
-        .from("lovable Auth")
-        .insert({
-          full_name: `${modelType}_model_${Date.now()}`,
-          updated_at: new Date().toISOString()
-        });
-
-      if (logError) throw logError;
-
-      // Simulate progress updates
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          const next = prev + 10;
-          if (next >= 90) clearInterval(progressInterval);
-          return Math.min(next, 90);
-        });
-      }, 1000);
-
-      console.log("Starting model generation with:", { selectedSource, modelType, target });
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
       
-      const result = await generatePrediction({
-        data: [1, 2, 3, 4, 5], // Replace with actual data from selected source
+      if (!session) {
+        toast.error("You must be logged in to generate models");
+        return;
+      }
+
+      console.log("Starting model generation with:", { selectedSource, modelType, target, industry });
+      
+      await generatePrediction({
         modelType,
-        target,
+        industry,
+        dataSource: selectedSource,
+        target
       });
       
-      clearInterval(progressInterval);
-      setProgress(100);
-      
-      console.log("Model generation result:", result);
       toast.success("Model generated successfully");
     } catch (error) {
       console.error("Error generating model:", error);
       toast.error("Failed to generate model. Please try again.");
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -80,6 +66,23 @@ export const ModelBuilder = () => {
       
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium mb-2 block">Industry</label>
+            <Select 
+              onValueChange={(value: "ecommerce" | "logistics" | "finance") => setIndustry(value)}
+              value={industry}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select industry" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="finance">Finance</SelectItem>
+                <SelectItem value="ecommerce">E-commerce</SelectItem>
+                <SelectItem value="logistics">Logistics</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div>
             <label className="text-sm font-medium mb-2 block">Data Source</label>
             <Select onValueChange={setSelectedSource} value={selectedSource}>
@@ -140,9 +143,9 @@ export const ModelBuilder = () => {
             size="lg" 
             className="w-full"
             onClick={handleGenerateModel}
-            disabled={loading || !selectedSource || !modelType || !target}
+            disabled={isGenerating || !selectedSource || !modelType || !target || !industry}
           >
-            {loading ? (
+            {isGenerating ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating Model...
@@ -154,7 +157,7 @@ export const ModelBuilder = () => {
         </div>
       </div>
 
-      {loading && (
+      {isGenerating && (
         <div className="mt-4">
           <p className="text-sm text-muted-foreground">
             Training progress: {progress}%
