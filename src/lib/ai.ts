@@ -1,3 +1,4 @@
+
 export interface IndustryInsights {
   metrics: {
     [key: string]: number;
@@ -208,5 +209,97 @@ export const getIndustryInsights = async (
       userBehavior: [],
       predictive: []
     }
+  };
+};
+
+// Add the missing analyzeTrends function
+export interface TrendAnalysisResult {
+  trend: string;
+  insights: string[];
+  anomalies?: number[];
+}
+
+export const analyzeTrends = async (
+  data: number[],
+  industry: string
+): Promise<TrendAnalysisResult> => {
+  // This is a mock implementation for the analyzeTrends function
+  // In a real application, this would use AI algorithms to analyze the data
+  
+  // Calculate simple trend direction
+  const firstHalf = data.slice(0, Math.floor(data.length / 2));
+  const secondHalf = data.slice(Math.floor(data.length / 2));
+  
+  const firstHalfAvg = firstHalf.reduce((sum, val) => sum + val, 0) / firstHalf.length;
+  const secondHalfAvg = secondHalf.reduce((sum, val) => sum + val, 0) / secondHalf.length;
+  
+  let trendDirection = "stable";
+  if (secondHalfAvg > firstHalfAvg * 1.05) {
+    trendDirection = "increasing";
+  } else if (secondHalfAvg < firstHalfAvg * 0.95) {
+    trendDirection = "decreasing";
+  }
+  
+  // Detect simple anomalies - values that are significantly different from the mean
+  const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
+  const stdDev = Math.sqrt(
+    data.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / data.length
+  );
+  
+  const anomalies = data
+    .map((val, idx) => (Math.abs(val - mean) > stdDev * 2 ? idx : -1))
+    .filter(idx => idx !== -1);
+  
+  // Generate mock insights based on industry and trend
+  let insights: string[] = [];
+  
+  if (industry === "ecommerce") {
+    insights = [
+      `Sales volume is ${trendDirection} over the analysis period.`,
+      "Customer engagement peaks on weekends.",
+      "Product categories showing highest growth: electronics, home goods.",
+      "Recommended action: Optimize inventory levels based on predicted demand."
+    ];
+  } else if (industry === "logistics") {
+    insights = [
+      `Delivery efficiency is ${trendDirection} over the analysis period.`,
+      "Peak delivery times occur during mid-month.",
+      "Routes with highest optimization potential: urban centers, express delivery.",
+      "Recommended action: Adjust staffing during peak periods."
+    ];
+  } else if (industry === "finance") {
+    insights = [
+      `Transaction volume is ${trendDirection} over the analysis period.`,
+      "Customer acquisition cost remains stable.",
+      "Highest growth products: investment accounts, premium cards.",
+      "Recommended action: Target retention offers to high-value segments."
+    ];
+  } else if (industry === "tech") {
+    insights = [
+      `User engagement is ${trendDirection} over the analysis period.`,
+      "Feature adoption is strongest in mobile applications.",
+      "User retention shows correlation with onboarding completion.",
+      "Recommended action: Optimize onboarding flow and feature discovery."
+    ];
+  } else if (industry === "realestate") {
+    insights = [
+      `Property interest is ${trendDirection} over the analysis period.`,
+      "Listing views peak during weekends and early evenings.",
+      "Highest performing properties: urban condos, suburban family homes.",
+      "Recommended action: Adjust pricing strategy based on demand patterns."
+    ];
+  } else {
+    insights = [
+      `Overall performance is ${trendDirection} over the analysis period.`,
+      "Key metrics remain within expected ranges.",
+      "Several opportunities for optimization identified.",
+      "Recommended action: Review detailed analysis for specific recommendations."
+    ];
+  }
+  
+  return {
+    trend: `The data shows a ${trendDirection} trend over the analyzed period.`,
+    insights,
+    anomalies: anomalies.length > 0 ? anomalies : undefined
   };
 };
