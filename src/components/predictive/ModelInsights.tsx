@@ -43,14 +43,14 @@ export const ModelInsights = () => {
   const [trend, setTrend] = useState<string>("");
   const [accuracy, setAccuracy] = useState<number>(0);
   const [anomalies, setAnomalies] = useState<number[]>([]);
-  const [selectedIndustry, setSelectedIndustry] = useState<"ecommerce" | "logistics" | "finance">("ecommerce");
+  const [selectedIndustry, setSelectedIndustry] = useState<"ecommerce" | "logistics" | "finance" | "tech" | "realestate">("ecommerce");
   const [industryInsights, setIndustryInsights] = useState<any>(null);
 
   useEffect(() => {
     fetchInsights(selectedIndustry);
   }, [selectedIndustry]);
 
-  const fetchInsights = async (industry: "ecommerce" | "logistics" | "finance") => {
+  const fetchInsights = async (industry: "ecommerce" | "logistics" | "finance" | "tech" | "realestate") => {
     setLoading(true);
     try {
       console.log(`Fetching insights for ${industry} industry`);
@@ -68,7 +68,13 @@ export const ModelInsights = () => {
         confidence: Math.random() * 30 + 70 // Simulated confidence scores 70-100%
       })));
       setTrend(result.trend);
-      setAnomalies(result.anomalies || []);
+      
+      // Safely handle anomalies which might be undefined or have a different structure
+      if (Array.isArray(result.anomalies)) {
+        setAnomalies(result.anomalies);
+      } else {
+        setAnomalies([]);
+      }
 
       // Get industry specific insights
       const industryData = await getIndustryInsights(industry);
@@ -76,6 +82,7 @@ export const ModelInsights = () => {
     } catch (error) {
       console.error("Error fetching insights:", error);
       toast.error("Failed to analyze trends. Please try again.");
+      setAnomalies([]);
     } finally {
       setLoading(false);
     }
@@ -86,7 +93,7 @@ export const ModelInsights = () => {
     toast.success("Thank you for your feedback! This helps improve our predictions.");
   };
 
-  const handleIndustryChange = (value: "ecommerce" | "logistics" | "finance") => {
+  const handleIndustryChange = (value: "ecommerce" | "logistics" | "finance" | "tech" | "realestate") => {
     setSelectedIndustry(value);
   };
 
@@ -104,6 +111,8 @@ export const ModelInsights = () => {
               <SelectItem value="ecommerce">E-commerce</SelectItem>
               <SelectItem value="logistics">Logistics</SelectItem>
               <SelectItem value="finance">Finance</SelectItem>
+              <SelectItem value="tech">Tech</SelectItem>
+              <SelectItem value="realestate">Real Estate</SelectItem>
             </SelectContent>
           </Select>
           {!loading && (
@@ -204,40 +213,44 @@ export const ModelInsights = () => {
                     <div className="mt-2 space-y-2">
                       {selectedIndustry === "ecommerce" && (
                         <>
-                          <p><span className="font-medium">Cart Abandonment:</span> {industryInsights.metrics.cartAbandonmentRate.toFixed(1)}%</p>
-                          <p><span className="font-medium">Conversion Rate:</span> {industryInsights.metrics.conversionRate.toFixed(1)}%</p>
+                          <p><span className="font-medium">Cart Abandonment:</span> {industryInsights.metrics.cartAbandonmentRate?.toFixed(1)}%</p>
+                          <p><span className="font-medium">Conversion Rate:</span> {industryInsights.metrics.conversionRate?.toFixed(1)}%</p>
                         </>
                       )}
                       {selectedIndustry === "logistics" && (
                         <>
-                          <p><span className="font-medium">On-Time Delivery:</span> {industryInsights.metrics.onTimeDeliveryRate.toFixed(1)}%</p>
-                          <p><span className="font-medium">Transit Time:</span> {industryInsights.metrics.averageTransitTime.toFixed(1)} days</p>
+                          <p><span className="font-medium">On-Time Delivery:</span> {industryInsights.metrics.onTimeDeliveryRate?.toFixed(1)}%</p>
+                          <p><span className="font-medium">Transit Time:</span> {industryInsights.metrics.averageTransitTime?.toFixed(1)} days</p>
                         </>
                       )}
                       {selectedIndustry === "finance" && (
                         <>
-                          <p><span className="font-medium">ROI:</span> {industryInsights.metrics.returnOnInvestment.toFixed(1)}%</p>
-                          <p><span className="font-medium">Operating Margin:</span> {industryInsights.metrics.operatingMargin.toFixed(1)}%</p>
+                          <p><span className="font-medium">Customer Acquisition Cost:</span> ${industryInsights.metrics.customerAcquisitionCost?.toFixed(2)}</p>
+                          <p><span className="font-medium">Customer Lifetime Value:</span> ${industryInsights.metrics.customerLifetimeValue?.toFixed(2)}</p>
                         </>
                       )}
-                      <div className="mt-3">
-                        <h5 className="font-medium">Key Risks:</h5>
-                        <ul className="list-disc list-inside mt-1">
-                          {industryInsights.risks.map((risk: any, idx: number) => (
-                            <li key={idx} className="flex items-center gap-2">
-                              <span className={
-                                risk.level === "high" ? "text-red-500" : 
-                                risk.level === "medium" ? "text-amber-500" : 
-                                "text-green-500"
-                              }>
-                                <AlertCircle className="inline h-3 w-3 mr-1" />
-                                {risk.level.charAt(0).toUpperCase() + risk.level.slice(1)}:
-                              </span> 
-                              {risk.description}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
+                      {selectedIndustry === "tech" && (
+                        <>
+                          <p><span className="font-medium">User Engagement:</span> {industryInsights.metrics.userEngagementRate?.toFixed(1)}%</p>
+                          <p><span className="font-medium">Feature Adoption:</span> {industryInsights.metrics.featureAdoptionRate?.toFixed(1)}%</p>
+                        </>
+                      )}
+                      {selectedIndustry === "realestate" && (
+                        <>
+                          <p><span className="font-medium">Market Analysis Score:</span> {industryInsights.metrics.marketAnalysisScore?.toFixed(1)}</p>
+                          <p><span className="font-medium">Property Valuation Change:</span> {industryInsights.metrics.propertyValuationChange?.toFixed(1)}%</p>
+                        </>
+                      )}
+                      {industryInsights.insights && selectedIndustry === "finance" && (
+                        <div className="mt-3">
+                          <h5 className="font-medium">Key Insights:</h5>
+                          <ul className="list-disc list-inside mt-1">
+                            {industryInsights.insights.userBehavior?.slice(0, 2).map((insight: string, idx: number) => (
+                              <li key={idx}>{insight}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

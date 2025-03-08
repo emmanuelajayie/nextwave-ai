@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Upload, ChartLine, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 export const ModelTraining = () => {
   const [file, setFile] = useState<File | null>(null);
   const [modelName, setModelName] = useState("");
   const [modelType, setModelType] = useState("regression");
-  const [industry, setIndustry] = useState<"ecommerce" | "logistics" | "finance">("finance");
+  const [industry, setIndustry] = useState<"ecommerce" | "logistics" | "finance" | "tech" | "realestate">("finance");
   const [isTraining, setIsTraining] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -105,7 +105,7 @@ export const ModelTraining = () => {
           <label className="block text-sm font-medium mb-2">Industry</label>
           <Select 
             value={industry} 
-            onValueChange={(value: "ecommerce" | "logistics" | "finance") => setIndustry(value)}
+            onValueChange={(value: "ecommerce" | "logistics" | "finance" | "tech" | "realestate") => setIndustry(value)}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select industry" />
@@ -114,6 +114,8 @@ export const ModelTraining = () => {
               <SelectItem value="finance">Finance</SelectItem>
               <SelectItem value="ecommerce">E-commerce</SelectItem>
               <SelectItem value="logistics">Logistics</SelectItem>
+              <SelectItem value="tech">Tech</SelectItem>
+              <SelectItem value="realestate">Real Estate</SelectItem>
             </SelectContent>
           </Select>
         </div>
