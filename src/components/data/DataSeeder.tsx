@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Database, Loader2 } from "lucide-react";
@@ -50,7 +49,7 @@ export const DataSeeder = () => {
       toast.success(`Successfully seeded ${industry} data`);
     } catch (error) {
       console.error("Error seeding data:", error);
-      toast.error("Failed to seed data: " + error.message);
+      toast.error("Failed to seed data: " + (error as Error).message);
     } finally {
       setIsSeeding(false);
     }

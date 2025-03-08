@@ -6,9 +6,19 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getIndustryInsights } from "@/lib/ai";
 import { Building, TrendingUp, Users, Shield, Loader2 } from "lucide-react";
 
+interface RealEstateData {
+  id: string;
+  date: string;
+  property_valuation: number;
+  market_demand_index: number;
+  lead_conversion_rate: number;
+  investment_potential_score: number;
+  user_id: string;
+}
+
 export const RealEstateInsights = () => {
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<RealEstateData[]>([]);
   const [insights, setInsights] = useState<any>(null);
 
   useEffect(() => {
@@ -22,7 +32,7 @@ export const RealEstateInsights = () => {
         if (session) {
           // Fetch data from Supabase
           const { data: realestateData, error } = await supabase
-            .from("realestate_data")
+            .from('realestate_data')
             .select("*")
             .eq("user_id", session.user.id)
             .order("date", { ascending: true })
@@ -48,7 +58,7 @@ export const RealEstateInsights = () => {
     fetchData();
   }, []);
 
-  const formatData = (data: any[]) => {
+  const formatData = (data: RealEstateData[]) => {
     return data.map(item => ({
       name: new Date(item.date).toLocaleDateString(),
       valuation: item.property_valuation,
@@ -161,9 +171,9 @@ export const RealEstateInsights = () => {
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="p-4">
           <h3 className="font-medium mb-3">Market Analysis Insights</h3>
-          {insights?.marketInsights ? (
+          {insights?.insights?.market ? (
             <ul className="space-y-2 text-sm">
-              {insights.marketInsights.map((insight: string, idx: number) => (
+              {insights.insights.market.map((insight: string, idx: number) => (
                 <li key={idx} className="flex gap-2">
                   <span className="text-primary">•</span>
                   {insight}
@@ -177,9 +187,9 @@ export const RealEstateInsights = () => {
         
         <Card className="p-4">
           <h3 className="font-medium mb-3">Lead Scoring Insights</h3>
-          {insights?.leadScoringInsights ? (
+          {insights?.insights?.leadScoring ? (
             <ul className="space-y-2 text-sm">
-              {insights.leadScoringInsights.map((insight: string, idx: number) => (
+              {insights.insights.leadScoring.map((insight: string, idx: number) => (
                 <li key={idx} className="flex gap-2">
                   <span className="text-primary">•</span>
                   {insight}

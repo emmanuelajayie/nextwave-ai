@@ -437,6 +437,51 @@ export type Database = {
         }
         Relationships: []
       }
+      realestate_data: {
+        Row: {
+          created_at: string | null
+          date: string | null
+          id: string
+          investment_potential_score: number | null
+          lead_conversion_rate: number | null
+          lead_scoring_data: Json | null
+          market_demand_index: number | null
+          market_trends: Json | null
+          property_types_performance: Json | null
+          property_valuation: number | null
+          security_compliance_metrics: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          investment_potential_score?: number | null
+          lead_conversion_rate?: number | null
+          lead_scoring_data?: Json | null
+          market_demand_index?: number | null
+          market_trends?: Json | null
+          property_types_performance?: Json | null
+          property_valuation?: number | null
+          security_compliance_metrics?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string | null
+          id?: string
+          investment_potential_score?: number | null
+          lead_conversion_rate?: number | null
+          lead_scoring_data?: Json | null
+          market_demand_index?: number | null
+          market_trends?: Json | null
+          property_types_performance?: Json | null
+          property_valuation?: number | null
+          security_compliance_metrics?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       setup_fees: {
         Row: {
           amount: number
@@ -570,6 +615,51 @@ export type Database = {
           id?: string
           name?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tech_data: {
+        Row: {
+          active_users: number | null
+          churn_rate: number | null
+          created_at: string | null
+          date: string | null
+          feature_adoption_rate: number | null
+          growth_rate: number | null
+          id: string
+          retention_rate: number | null
+          security_metrics: Json | null
+          user_behavior_patterns: Json | null
+          user_engagement_rate: number | null
+          user_id: string | null
+        }
+        Insert: {
+          active_users?: number | null
+          churn_rate?: number | null
+          created_at?: string | null
+          date?: string | null
+          feature_adoption_rate?: number | null
+          growth_rate?: number | null
+          id?: string
+          retention_rate?: number | null
+          security_metrics?: Json | null
+          user_behavior_patterns?: Json | null
+          user_engagement_rate?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          active_users?: number | null
+          churn_rate?: number | null
+          created_at?: string | null
+          date?: string | null
+          feature_adoption_rate?: number | null
+          growth_rate?: number | null
+          id?: string
+          retention_rate?: number | null
+          security_metrics?: Json | null
+          user_behavior_patterns?: Json | null
+          user_engagement_rate?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }

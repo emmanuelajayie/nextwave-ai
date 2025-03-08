@@ -6,9 +6,19 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getIndustryInsights } from "@/lib/ai";
 import { Shield, Users, BarChart2, TrendingUp, Loader2 } from "lucide-react";
 
+interface TechData {
+  id: string;
+  date: string;
+  user_engagement_rate: number;
+  feature_adoption_rate: number;
+  churn_rate: number;
+  retention_rate: number;
+  user_id: string;
+}
+
 export const TechInsights = () => {
   const [loading, setLoading] = useState(true);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<TechData[]>([]);
   const [insights, setInsights] = useState<any>(null);
 
   useEffect(() => {
@@ -22,7 +32,7 @@ export const TechInsights = () => {
         if (session) {
           // Fetch data from Supabase
           const { data: techData, error } = await supabase
-            .from("tech_data")
+            .from('tech_data')
             .select("*")
             .eq("user_id", session.user.id)
             .order("date", { ascending: true })
@@ -48,7 +58,7 @@ export const TechInsights = () => {
     fetchData();
   }, []);
 
-  const formatData = (data: any[]) => {
+  const formatData = (data: TechData[]) => {
     return data.map(item => ({
       name: new Date(item.date).toLocaleDateString(),
       engagement: item.user_engagement_rate,
@@ -144,9 +154,9 @@ export const TechInsights = () => {
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="p-4">
           <h3 className="font-medium mb-3">User Behavior Insights</h3>
-          {insights?.userBehaviorInsights ? (
+          {insights?.insights?.userBehavior ? (
             <ul className="space-y-2 text-sm">
-              {insights.userBehaviorInsights.map((insight: string, idx: number) => (
+              {insights.insights.userBehavior.map((insight: string, idx: number) => (
                 <li key={idx} className="flex gap-2">
                   <span className="text-primary">•</span>
                   {insight}
@@ -160,9 +170,9 @@ export const TechInsights = () => {
         
         <Card className="p-4">
           <h3 className="font-medium mb-3">Predictive Insights</h3>
-          {insights?.predictiveInsights ? (
+          {insights?.insights?.predictive ? (
             <ul className="space-y-2 text-sm">
-              {insights.predictiveInsights.map((insight: string, idx: number) => (
+              {insights.insights.predictive.map((insight: string, idx: number) => (
                 <li key={idx} className="flex gap-2">
                   <span className="text-primary">•</span>
                   {insight}
