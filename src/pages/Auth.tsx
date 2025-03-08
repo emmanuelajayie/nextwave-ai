@@ -4,19 +4,27 @@ import { Navigate } from "react-router-dom";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { CompanyDetailsForm } from "@/components/auth/CompanyDetailsForm";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 const Auth = () => {
   const [showCompanyDetails, setShowCompanyDetails] = useState(false);
   const [email, setEmail] = useState("");
 
-  const { data: session } = useQuery({
+  const { data: session, isLoading } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
       const { data: { session } } = await supabase.auth.getSession();
       return session;
     },
   });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   if (session) {
     return <Navigate to="/" replace />;
