@@ -71,7 +71,8 @@ export const ModelTraining = () => {
           industry: industry,
           data_source: fileName,
           status: 'completed',
-          training_progress: 100
+          training_progress: 100,
+          user_id: session.user.id
         });
 
       if (error) throw error;
