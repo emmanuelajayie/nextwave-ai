@@ -154,6 +154,91 @@ serve(async (req) => {
       console.log(`Inserted ${logisticsData.length} logistics records`);
     }
 
+    if (industry === "tech" || industry === "all") {
+      // Generate tech industry data
+      const techData = dates.map((date, i) => {
+        // Create some trends over time
+        const trendFactor = 1 + (i * 0.004); // 0.4% growth per day
+        const randomFactor = 0.92 + (Math.random() * 0.16); // Random variation +/- 8%
+        
+        return {
+          user_id: user.id,
+          date,
+          user_engagement_rate: 65 + (i * 0.4) * randomFactor, // Increasing trend with noise
+          feature_adoption_rate: 38 + (i * 0.3) * randomFactor, // Increasing trend with noise
+          churn_rate: 8 - (i * 0.1) * randomFactor, // Decreasing trend with noise
+          growth_rate: 10 + (i * 0.1) * randomFactor,
+          active_users: 5000 + (i * 100) * randomFactor,
+          retention_rate: 80 + (i * 0.2) * randomFactor,
+          user_behavior_patterns: [
+            { action: "login", frequency: 0.95 - (Math.random() * 0.1) },
+            { action: "feature_use", frequency: 0.75 + (i * 0.005) },
+            { action: "settings", frequency: 0.25 + (Math.random() * 0.1) },
+            { action: "upgrade", frequency: 0.05 + (i * 0.002) }
+          ],
+          security_metrics: {
+            vulnerabilities: Math.max(0, 12 - i * 0.3),
+            auth_failures: Math.floor(Math.random() * 10),
+            data_compliance: 90 + (i * 0.3)
+          }
+        };
+      });
+      
+      // Insert tech data
+      const { error: techError } = await supabase
+        .from("tech_data")
+        .upsert(techData);
+      
+      if (techError) throw techError;
+      console.log(`Inserted ${techData.length} tech records`);
+    }
+
+    if (industry === "realestate" || industry === "all") {
+      // Generate real estate industry data
+      const realestateData = dates.map((date, i) => {
+        // Create some trends over time
+        const trendFactor = 1 + (i * 0.003); // 0.3% growth per day
+        const randomFactor = 0.94 + (Math.random() * 0.12); // Random variation +/- 6%
+        
+        return {
+          user_id: user.id,
+          date,
+          property_valuation: 320000 + (i * 1000) * randomFactor, // Increasing trend with noise
+          market_demand_index: 78 + (i * 0.2) * randomFactor,
+          lead_conversion_rate: 7 + (i * 0.08) * randomFactor,
+          investment_potential_score: 72 + (i * 0.15) * randomFactor,
+          market_trends: [
+            { region: "urban", growth: 5 + (i * 0.1) * randomFactor },
+            { region: "suburban", growth: 8 + (i * 0.15) * randomFactor },
+            { region: "rural", growth: 3 + (i * 0.05) * randomFactor }
+          ],
+          property_types_performance: {
+            residential: { value_change: 4 + (i * 0.1) * randomFactor, demand: 85 + (i * 0.2) },
+            commercial: { value_change: 2 + (i * 0.05) * randomFactor, demand: 65 + (i * 0.3) },
+            industrial: { value_change: 3 + (i * 0.07) * randomFactor, demand: 70 + (i * 0.25) }
+          },
+          lead_scoring_data: [
+            { score: 85 + (i * 0.3), conversion_rate: 12 + (i * 0.2) * randomFactor },
+            { score: 65 + (i * 0.2), conversion_rate: 8 + (i * 0.15) * randomFactor },
+            { score: 45 + (i * 0.1), conversion_rate: 4 + (i * 0.1) * randomFactor }
+          ],
+          security_compliance_metrics: {
+            data_encryption: 95 + (i * 0.1),
+            client_data_protection: 92 + (i * 0.2),
+            access_control: 90 + (i * 0.25)
+          }
+        };
+      });
+      
+      // Insert real estate data
+      const { error: realestateError } = await supabase
+        .from("realestate_data")
+        .upsert(realestateData);
+      
+      if (realestateError) throw realestateError;
+      console.log(`Inserted ${realestateData.length} real estate records`);
+    }
+
     return new Response(
       JSON.stringify({ 
         success: true, 

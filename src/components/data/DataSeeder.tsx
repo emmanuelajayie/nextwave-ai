@@ -15,7 +15,7 @@ import {
 
 export const DataSeeder = () => {
   const [isSeeding, setIsSeeding] = useState(false);
-  const [industry, setIndustry] = useState<"all" | "finance" | "ecommerce" | "logistics">("all");
+  const [industry, setIndustry] = useState<"all" | "finance" | "ecommerce" | "logistics" | "tech" | "realestate">("all");
 
   const handleSeedData = async () => {
     try {
@@ -57,24 +57,15 @@ export const DataSeeder = () => {
   };
 
   return (
-    <Card className="p-6">
-      <div className="flex items-center gap-2 mb-6">
-        <Database className="h-5 w-5" />
-        <h2 className="text-xl font-semibold">Data Generator</h2>
-      </div>
-      
+    <div>
       <div className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          Generate sample data for testing the predictive models and insights for your selected industry.
-        </p>
-        
         <div>
           <label className="text-sm font-medium mb-2 block">Industry to Seed</label>
           <Select 
             value={industry}
-            onValueChange={(value: "all" | "finance" | "ecommerce" | "logistics") => setIndustry(value)}
+            onValueChange={(value: "all" | "finance" | "ecommerce" | "logistics" | "tech" | "realestate") => setIndustry(value)}
           >
-            <SelectTrigger>
+            <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Select industry" />
             </SelectTrigger>
             <SelectContent>
@@ -82,6 +73,8 @@ export const DataSeeder = () => {
               <SelectItem value="finance">Finance</SelectItem>
               <SelectItem value="ecommerce">E-commerce</SelectItem>
               <SelectItem value="logistics">Logistics</SelectItem>
+              <SelectItem value="tech">Tech</SelectItem>
+              <SelectItem value="realestate">Real Estate</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -101,6 +94,6 @@ export const DataSeeder = () => {
           )}
         </Button>
       </div>
-    </Card>
+    </div>
   );
 };

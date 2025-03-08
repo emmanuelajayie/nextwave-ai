@@ -1,19 +1,18 @@
-
 import { toast } from "sonner";
 
 interface PredictionRequest {
   data: number[];
   modelType: "regression" | "classification" | "clustering";
   target?: string;
-  industry?: "ecommerce" | "logistics" | "finance"; // Added industry parameter
-  context?: Record<string, any>; // Added context for additional parameters
+  industry?: "ecommerce" | "logistics" | "finance" | "tech" | "realestate";
+  context?: Record<string, any>;
 }
 
 interface PredictionResponse {
   prediction: number[] | string[];
   confidence: number;
   insights: string[];
-  recommendations?: string[]; // Added recommendations field
+  recommendations?: string[];
 }
 
 interface TrendAnalysisResponse {
@@ -21,12 +20,11 @@ interface TrendAnalysisResponse {
   confidence: number;
   insights: string[];
   forecast: number[];
-  anomalies?: number[]; // Added anomalies detection
+  anomalies?: number[];
 }
 
-// New interface for industry-specific insights
 interface IndustryInsights {
-  industryType: "ecommerce" | "logistics" | "finance";
+  industryType: "ecommerce" | "logistics" | "finance" | "tech" | "realestate";
   metrics: Record<string, number>;
   trends: Record<string, string>;
   risks: { level: "low" | "medium" | "high"; description: string }[];
@@ -94,8 +92,41 @@ export const generatePrediction = async (params: PredictionRequest): Promise<Pre
           "Review discretionary spending categories with highest growth"
         ]
       };
+    } else if (params.industry === "tech") {
+      response = {
+        prediction: params.modelType === "regression" ? 
+          [82, 85, 87, 90, 92] :
+          ["high_engagement", "low_engagement", "high_engagement", "potential_churn", "loyal_user"],
+        confidence: 0.93,
+        insights: [
+          "User engagement shows 15% increase after new feature release",
+          "Mobile usage exceeds desktop by 37% during evening hours",
+          "Feature adoption rate is strongest in 25-34 age demographic"
+        ],
+        recommendations: [
+          "Optimize onboarding for high-engagement feature discovery",
+          "Target re-engagement campaigns to potential churn segment",
+          "Focus mobile experience improvements for evening users"
+        ]
+      };
+    } else if (params.industry === "realestate") {
+      response = {
+        prediction: params.modelType === "regression" ? 
+          [320, 335, 347, 360, 370] :
+          ["high_value", "average_value", "high_value", "premium", "average_value"],
+        confidence: 0.91,
+        insights: [
+          "Property values trending 8% higher in northwestern districts",
+          "Lead-to-purchase cycle averages 47 days for high-value properties",
+          "Investment properties showing 12% higher ROI than primary residences"
+        ],
+        recommendations: [
+          "Prioritize lead nurturing for premium property segments",
+          "Focus market analysis on northwestern district expansion",
+          "Develop investor-specific marketing for investment properties"
+        ]
+      };
     } else {
-      // Default response when no industry is specified
       response = {
         prediction: params.modelType === "regression" ? 
           [120, 145, 160, 180, 200] :
@@ -118,7 +149,7 @@ export const generatePrediction = async (params: PredictionRequest): Promise<Pre
   }
 };
 
-export const analyzeTrends = async (data: number[], industry?: "ecommerce" | "logistics" | "finance"): Promise<TrendAnalysisResponse> => {
+export const analyzeTrends = async (data: number[], industry?: "ecommerce" | "logistics" | "finance" | "tech" | "realestate"): Promise<TrendAnalysisResponse> => {
   try {
     console.log("Analyzing trends with data:", data);
     console.log("Industry context:", industry);
@@ -165,6 +196,20 @@ export const analyzeTrends = async (data: number[], industry?: "ecommerce" | "lo
         "Expense patterns indicate potential for cost optimization",
         "Revenue streams show correlation with market indices"
       ];
+    } else if (industry === "tech") {
+      insights = [
+        `${trend.charAt(0).toUpperCase() + trend.slice(1)} trend in user engagement metrics`,
+        `Average engagement change: ${avgChange.toFixed(2)}%`,
+        "Feature adoption patterns correlate with application updates",
+        "User retention shows strong correlation with engagement frequency"
+      ];
+    } else if (industry === "realestate") {
+      insights = [
+        `${trend.charAt(0).toUpperCase() + trend.slice(1)} trend in property valuations`,
+        `Average market demand change: ${avgChange.toFixed(2)}%`,
+        "Lead conversion rates highest for properties in mid-price range",
+        "Seasonal variations detected in premium property segment"
+      ];
     } else {
       insights = [
         `${trend.charAt(0).toUpperCase() + trend.slice(1)} trend detected`,
@@ -187,9 +232,8 @@ export const analyzeTrends = async (data: number[], industry?: "ecommerce" | "lo
   }
 };
 
-// New function for industry-specific insights
 export const getIndustryInsights = async (
-  industry: "ecommerce" | "logistics" | "finance",
+  industry: "ecommerce" | "logistics" | "finance" | "tech" | "realestate",
   data?: Record<string, any>
 ): Promise<IndustryInsights> => {
   try {
@@ -287,6 +331,108 @@ export const getIndustryInsights = async (
           ]
         };
         break;
+
+      case "tech":
+        insights = {
+          industryType: "tech",
+          metrics: {
+            userEngagementRate: 76.3,
+            featureAdoptionRate: 42.7,
+            churnRate: 5.8,
+            growthRate: 12.4,
+            retentionRate: 84.6,
+            securityScore: 91.2
+          },
+          trends: {
+            userEngagement: "increasing",
+            featureAdoption: "increasing",
+            churn: "decreasing",
+            security: "stable"
+          },
+          risks: [
+            { level: "medium", description: "User data privacy compliance" },
+            { level: "low", description: "Third-party integration security" },
+            { level: "high", description: "Feature adoption in enterprise segment" }
+          ],
+          opportunities: [
+            "Personalized onboarding could increase feature adoption by 27%",
+            "AI-powered recommendations to improve user engagement",
+            "Predictive churn management for at-risk users"
+          ],
+          userBehaviorInsights: [
+            "Peak usage occurs between 1-3pm on weekdays",
+            "Mobile users spend 2.3x more time in the application",
+            "Feature discovery is 34% higher with guided onboarding"
+          ],
+          predictiveInsights: [
+            "User growth projected to increase 15% next quarter",
+            "Enterprise segment shows highest potential for expansion",
+            "Early adoption metrics indicate strong product-market fit"
+          ]
+        };
+        break;
+
+      case "realestate":
+        insights = {
+          industryType: "realestate",
+          metrics: {
+            marketAnalysisScore: 87.2,
+            propertyValuationChange: 6.3,
+            leadConversionRate: 8.7,
+            investmentPotentialIndex: 76.4,
+            securityComplianceScore: 94.5
+          },
+          trends: {
+            marketAnalysis: "improving",
+            propertyValuation: "increasing",
+            leadConversion: "stable",
+            security: "improving"
+          },
+          risks: [
+            { level: "high", description: "Market volatility in luxury segment" },
+            { level: "medium", description: "Regulatory compliance for client data" },
+            { level: "low", description: "Lead qualification accuracy" }
+          ],
+          opportunities: [
+            "Predictive pricing models could improve valuation accuracy by 15%",
+            "AI-driven lead scoring to prioritize high-conversion prospects",
+            "Automated market reports for client engagement"
+          ],
+          marketInsights: [
+            "Urban properties showing 7.2% higher appreciation rate",
+            "Investment properties outperforming primary residences by 4.6%",
+            "Suburban growth accelerating in northwestern districts"
+          ],
+          leadScoringInsights: [
+            "Previous homeowners convert 2.3x faster than first-time buyers",
+            "Digital engagement strongly correlates with purchase intent",
+            "Follow-up timing critical for high-value property inquiries"
+          ]
+        };
+        break;
+        
+      default:
+        insights = {
+          industryType: "ecommerce",
+          metrics: {
+            genericMetric1: 75.0,
+            genericMetric2: 42.5,
+            genericMetric3: 25.8
+          },
+          trends: {
+            trend1: "stable",
+            trend2: "increasing",
+            trend3: "decreasing"
+          },
+          risks: [
+            { level: "medium", description: "Generic risk 1" },
+            { level: "low", description: "Generic risk 2" }
+          ],
+          opportunities: [
+            "Generic opportunity 1",
+            "Generic opportunity 2"
+          ]
+        };
     }
     
     return insights;

@@ -18,7 +18,7 @@ export const ModelBuilder = () => {
   const [selectedSource, setSelectedSource] = useState<string>("");
   const [modelType, setModelType] = useState<"regression" | "classification" | "clustering">("regression");
   const [target, setTarget] = useState<string>("");
-  const [industry, setIndustry] = useState<"ecommerce" | "logistics" | "finance">("finance");
+  const [industry, setIndustry] = useState<"ecommerce" | "logistics" | "finance" | "tech" | "realestate">("finance");
   
   const { 
     isGenerating, 
@@ -69,7 +69,7 @@ export const ModelBuilder = () => {
           <div>
             <label className="text-sm font-medium mb-2 block">Industry</label>
             <Select 
-              onValueChange={(value: "ecommerce" | "logistics" | "finance") => setIndustry(value)}
+              onValueChange={(value: "ecommerce" | "logistics" | "finance" | "tech" | "realestate") => setIndustry(value)}
               value={industry}
             >
               <SelectTrigger>
@@ -79,6 +79,8 @@ export const ModelBuilder = () => {
                 <SelectItem value="finance">Finance</SelectItem>
                 <SelectItem value="ecommerce">E-commerce</SelectItem>
                 <SelectItem value="logistics">Logistics</SelectItem>
+                <SelectItem value="tech">Tech</SelectItem>
+                <SelectItem value="realestate">Real Estate</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -94,6 +96,9 @@ export const ModelBuilder = () => {
                 <SelectItem value="customer_data">Customer Analysis</SelectItem>
                 <SelectItem value="marketing_data">Marketing Metrics</SelectItem>
                 <SelectItem value="crm_data">CRM Data</SelectItem>
+                <SelectItem value="product_data">Product Analytics</SelectItem>
+                <SelectItem value="property_data">Property Database</SelectItem>
+                <SelectItem value="market_data">Market Analysis</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -126,6 +131,10 @@ export const ModelBuilder = () => {
                 <SelectItem value="churn">Customer Churn</SelectItem>
                 <SelectItem value="revenue">Revenue Forecast</SelectItem>
                 <SelectItem value="satisfaction">Customer Satisfaction</SelectItem>
+                <SelectItem value="product_engagement">Product Engagement</SelectItem>
+                <SelectItem value="user_behavior">User Behavior</SelectItem>
+                <SelectItem value="property_valuation">Property Valuation</SelectItem>
+                <SelectItem value="lead_scoring">Lead Scoring</SelectItem>
               </SelectContent>
             </Select>
           </div>

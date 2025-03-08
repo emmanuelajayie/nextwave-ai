@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 export interface PredictionRequest {
   modelType: "regression" | "classification" | "clustering";
-  industry: "ecommerce" | "logistics" | "finance";
+  industry: "ecommerce" | "logistics" | "finance" | "tech" | "realestate";
   dataSource: string;
   target: string;
 }
