@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { ChartLine, Loader2, ThumbsUp, ThumbsDown, AlertCircle } from "lucide-react";
+import { ChartLine, Loader2, ThumbsUp, ThumbsDown } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -45,13 +45,16 @@ export const ModelInsights = () => {
   const [anomalies, setAnomalies] = useState<number[]>([]);
   const [selectedIndustry, setSelectedIndustry] = useState<"ecommerce" | "logistics" | "finance" | "tech" | "realestate">("ecommerce");
   const [industryInsights, setIndustryInsights] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log("ModelInsights component mounted");
     fetchInsights(selectedIndustry);
   }, [selectedIndustry]);
 
   const fetchInsights = async (industry: "ecommerce" | "logistics" | "finance" | "tech" | "realestate") => {
     setLoading(true);
+    setError(null);
     try {
       console.log(`Fetching insights for ${industry} industry`);
       const result = await analyzeTrends(sampleData.map(d => d.actual), industry);
@@ -63,26 +66,42 @@ export const ModelInsights = () => {
       }, 0) / sampleData.length * 100;
       
       setAccuracy(100 - mape);
-      setInsights(result.insights.map(text => ({
-        text,
-        confidence: Math.random() * 30 + 70 // Simulated confidence scores 70-100%
-      })));
-      setTrend(result.trend);
       
-      // Safely handle anomalies which might be undefined or have a different structure
-      if (Array.isArray(result.anomalies)) {
+      // Handle insights safely
+      if (result.insights && Array.isArray(result.insights)) {
+        setInsights(result.insights.map(text => ({
+          text,
+          confidence: Math.random() * 30 + 70 // Simulated confidence scores 70-100%
+        })));
+      } else {
+        setInsights([]);
+      }
+      
+      // Set trend safely
+      setTrend(result.trend || "No trend available");
+      
+      // Safely handle anomalies
+      if (result.anomalies && Array.isArray(result.anomalies)) {
         setAnomalies(result.anomalies);
       } else {
         setAnomalies([]);
       }
 
       // Get industry specific insights
-      const industryData = await getIndustryInsights(industry);
-      setIndustryInsights(industryData);
+      try {
+        const industryData = await getIndustryInsights(industry);
+        setIndustryInsights(industryData);
+      } catch (industryError) {
+        console.error("Error fetching industry insights:", industryError);
+        setIndustryInsights(null);
+      }
     } catch (error) {
       console.error("Error fetching insights:", error);
+      setError("Failed to analyze trends. Please try again.");
       toast.error("Failed to analyze trends. Please try again.");
       setAnomalies([]);
+      setInsights([]);
+      setTrend("No trend available");
     } finally {
       setLoading(false);
     }
@@ -96,6 +115,28 @@ export const ModelInsights = () => {
   const handleIndustryChange = (value: "ecommerce" | "logistics" | "finance" | "tech" | "realestate") => {
     setSelectedIndustry(value);
   };
+
+  // If there was an error loading the component, show a fallback UI
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center gap-2 mb-6">
+          <ChartLine className="h-5 w-5" />
+          <h2 className="text-xl font-semibold">Model Insights</h2>
+        </div>
+        <div className="p-4 bg-red-50 rounded-lg text-red-600">
+          <p>{error}</p>
+          <Button 
+            onClick={() => fetchInsights(selectedIndustry)} 
+            variant="outline" 
+            className="mt-2"
+          >
+            Retry
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
@@ -165,7 +206,7 @@ export const ModelInsights = () => {
               </div>
             ) : (
               <ul className="space-y-4">
-                {insights.map((insight, index) => (
+                {insights.length > 0 ? insights.map((insight, index) => (
                   <li key={index} className="space-y-2">
                     <div className="flex items-start justify-between gap-4">
                       <span className="text-sm text-gray-600">{insight.text}</span>
@@ -194,7 +235,9 @@ export const ModelInsights = () => {
                       </Button>
                     </div>
                   </li>
-                ))}
+                )) : (
+                  <p className="text-sm text-gray-500">No insights available for this selection.</p>
+                )}
               </ul>
             )}
           </div>
@@ -211,31 +254,31 @@ export const ModelInsights = () => {
                   <div className="mt-3">
                     <h4 className="font-medium text-primary">{selectedIndustry.charAt(0).toUpperCase() + selectedIndustry.slice(1)} Insights</h4>
                     <div className="mt-2 space-y-2">
-                      {selectedIndustry === "ecommerce" && (
+                      {selectedIndustry === "ecommerce" && industryInsights.metrics && (
                         <>
                           <p><span className="font-medium">Cart Abandonment:</span> {industryInsights.metrics.cartAbandonmentRate?.toFixed(1)}%</p>
                           <p><span className="font-medium">Conversion Rate:</span> {industryInsights.metrics.conversionRate?.toFixed(1)}%</p>
                         </>
                       )}
-                      {selectedIndustry === "logistics" && (
+                      {selectedIndustry === "logistics" && industryInsights.metrics && (
                         <>
                           <p><span className="font-medium">On-Time Delivery:</span> {industryInsights.metrics.onTimeDeliveryRate?.toFixed(1)}%</p>
                           <p><span className="font-medium">Transit Time:</span> {industryInsights.metrics.averageTransitTime?.toFixed(1)} days</p>
                         </>
                       )}
-                      {selectedIndustry === "finance" && (
+                      {selectedIndustry === "finance" && industryInsights.metrics && (
                         <>
                           <p><span className="font-medium">Customer Acquisition Cost:</span> ${industryInsights.metrics.customerAcquisitionCost?.toFixed(2)}</p>
                           <p><span className="font-medium">Customer Lifetime Value:</span> ${industryInsights.metrics.customerLifetimeValue?.toFixed(2)}</p>
                         </>
                       )}
-                      {selectedIndustry === "tech" && (
+                      {selectedIndustry === "tech" && industryInsights.metrics && (
                         <>
                           <p><span className="font-medium">User Engagement:</span> {industryInsights.metrics.userEngagementRate?.toFixed(1)}%</p>
                           <p><span className="font-medium">Feature Adoption:</span> {industryInsights.metrics.featureAdoptionRate?.toFixed(1)}%</p>
                         </>
                       )}
-                      {selectedIndustry === "realestate" && (
+                      {selectedIndustry === "realestate" && industryInsights.metrics && (
                         <>
                           <p><span className="font-medium">Market Analysis Score:</span> {industryInsights.metrics.marketAnalysisScore?.toFixed(1)}</p>
                           <p><span className="font-medium">Property Valuation Change:</span> {industryInsights.metrics.propertyValuationChange?.toFixed(1)}%</p>

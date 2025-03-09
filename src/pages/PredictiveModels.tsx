@@ -7,8 +7,14 @@ import { ModelInsights } from "@/components/predictive/ModelInsights";
 import { ModelDeployment } from "@/components/predictive/ModelDeployment";
 import { ScheduledTasks } from "@/components/automation/ScheduledTasks";
 import { IndustryInsights } from "@/components/industries/IndustryInsights";
+import { useEffect } from "react";
 
 const PredictiveModels = () => {
+  useEffect(() => {
+    // Log when the component mounts to verify it's being rendered
+    console.log("PredictiveModels page mounted");
+  }, []);
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">

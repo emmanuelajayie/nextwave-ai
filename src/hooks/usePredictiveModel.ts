@@ -27,17 +27,24 @@ export const usePredictiveModel = () => {
   const { data: models, isLoading: isLoadingModels, refetch: refetchModels } = useQuery({
     queryKey: ['predictive-models'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('predictive_models')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error("Error fetching models:", error);
-        throw error;
+      console.log("Fetching predictive models");
+      try {
+        const { data, error } = await supabase
+          .from('predictive_models')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error("Error fetching models:", error);
+          throw error;
+        }
+        
+        console.log("Fetched models:", data);
+        return data || [];
+      } catch (error) {
+        console.error("Exception in queryFn:", error);
+        return [];
       }
-      
-      return data || [];
     }
   });
 
@@ -45,6 +52,7 @@ export const usePredictiveModel = () => {
   const generatePrediction = async (params: PredictionRequest): Promise<PredictionResponse> => {
     try {
       setIsGenerating(true);
+      console.log("Generating prediction with params:", params);
       
       // First create a pending model record
       const { data: pendingModel, error: pendingError } = await supabase
@@ -61,7 +69,10 @@ export const usePredictiveModel = () => {
         .select()
         .single();
       
-      if (pendingError) throw pendingError;
+      if (pendingError) {
+        console.error("Error creating pending model:", pendingError);
+        throw pendingError;
+      }
       
       // Simulate progress updates
       const progressInterval = setInterval(() => {
@@ -80,6 +91,7 @@ export const usePredictiveModel = () => {
       }
       
       // Call the predict edge function
+      console.log("Calling predict edge function");
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/predict`,
         {
@@ -97,10 +109,12 @@ export const usePredictiveModel = () => {
       
       if (!response.ok) {
         const error = await response.json();
+        console.error("Edge function error:", error);
         throw new Error(error.message || "Failed to generate prediction");
       }
       
       const result = await response.json();
+      console.log("Prediction result:", result);
       
       // Refetch the models to get the updated list
       refetchModels();
@@ -108,7 +122,7 @@ export const usePredictiveModel = () => {
       return result;
     } catch (error) {
       console.error("Error generating prediction:", error);
-      toast.error("Failed to generate prediction: " + error.message);
+      toast.error("Failed to generate prediction: " + (error instanceof Error ? error.message : "Unknown error"));
       throw error;
     } finally {
       setIsGenerating(false);
@@ -118,6 +132,7 @@ export const usePredictiveModel = () => {
   // Update an existing model
   const { mutate: updateModel } = useMutation({
     mutationFn: async ({ id, ...updates }: { id: string, [key: string]: any }) => {
+      console.log("Updating model:", id, updates);
       const { data, error } = await supabase
         .from('predictive_models')
         .update(updates)
@@ -125,7 +140,10 @@ export const usePredictiveModel = () => {
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating model:", error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -134,7 +152,7 @@ export const usePredictiveModel = () => {
     },
     onError: (error) => {
       console.error("Error updating model:", error);
-      toast.error("Failed to update model");
+      toast.error("Failed to update model: " + (error instanceof Error ? error.message : "Unknown error"));
     }
   });
 
