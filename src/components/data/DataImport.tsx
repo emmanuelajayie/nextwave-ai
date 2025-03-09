@@ -6,6 +6,10 @@ import { FileSpreadsheet, Table, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Database } from "@/integrations/supabase/types";
+
+// Define a type for data sources
+type DataSource = Database['public']['Tables']['data_sources']['Row'];
 
 export const DataImport = () => {
   const [isUploading, setIsUploading] = useState(false);

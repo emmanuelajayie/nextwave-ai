@@ -15,16 +15,13 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { Database } from "@/integrations/supabase/types";
 
-interface DataSource {
-  id: number;
-  name: string;
-  type: string;
-  last_sync: string;
-  status: string;
-}
+// Define a type for data sources based on our database schema
+type DataSource = Database['public']['Tables']['data_sources']['Row'];
 
-const getStatusColor = (status: string) => {
+const getStatusColor = (status: string | null) => {
   switch (status) {
     case "Connected":
       return "bg-green-500/10 text-green-500 hover:bg-green-500/20";
@@ -85,7 +82,7 @@ export const DataSources = () => {
     };
   }, [user]);
 
-  const handleRefresh = async (sourceId: number) => {
+  const handleRefresh = async (sourceId: string) => {
     setIsRefreshing(true);
     try {
       await supabase
@@ -117,12 +114,12 @@ export const DataSources = () => {
     }
   };
 
-  const handleView = (sourceId: number) => {
+  const handleView = (sourceId: string) => {
     // In a real app, this would navigate to a data preview page
     toast.info("Viewing data source details");
   };
 
-  const handleDisconnect = async (sourceId: number) => {
+  const handleDisconnect = async (sourceId: string) => {
     try {
       await supabase
         .from("data_sources")
@@ -140,27 +137,47 @@ export const DataSources = () => {
   // If no custom sources yet, show the default mock data
   const displaySources = sources.length > 0 ? sources : [
     {
-      id: 1,
+      id: "1",
       name: "Sales Data 2024",
       type: "Google Sheets",
-      last_sync: "2 hours ago",
+      last_sync: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
       status: "Connected",
+      user_id: "",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
-      id: 2,
+      id: "2",
       name: "Marketing Metrics",
       type: "Excel Online",
-      last_sync: "1 day ago",
+      last_sync: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
       status: "Error",
+      user_id: "",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
     {
-      id: 3,
+      id: "3",
       name: "Customer Analysis",
       type: "Excel File",
-      last_sync: "Just now",
+      last_sync: new Date().toISOString(), // Just now
       status: "Syncing",
+      user_id: "",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
     },
   ];
+
+  // Format the last sync time to be more readable
+  const formatLastSync = (timestamp: string | null) => {
+    if (!timestamp) return "Never";
+    
+    try {
+      return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+    } catch (e) {
+      return timestamp;
+    }
+  };
 
   return (
     <Card className="p-6">
@@ -180,13 +197,13 @@ export const DataSources = () => {
             <TableRow key={source.id}>
               <TableCell className="font-medium">{source.name}</TableCell>
               <TableCell>{source.type}</TableCell>
-              <TableCell>{source.last_sync}</TableCell>
+              <TableCell>{formatLastSync(source.last_sync)}</TableCell>
               <TableCell>
                 <Badge
                   variant="secondary"
                   className={getStatusColor(source.status)}
                 >
-                  {source.status}
+                  {source.status || "Unknown"}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
