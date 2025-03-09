@@ -60,19 +60,35 @@ serve(async (req) => {
       throw new Error(flutterwaveData.message || "Failed to verify payment");
     }
 
-    // Update payment status and start trial if applicable
+    // Get payment details from our database
+    const { data: existingPayment, error: fetchError } = await supabaseClient
+      .from("payments")
+      .select("*")
+      .eq("transaction_ref", reference)
+      .single();
+
+    if (fetchError) {
+      console.error("Error fetching payment:", fetchError);
+      throw new Error("Failed to fetch payment details");
+    }
+
+    const subscriptionStatus = existingPayment.payment_type === "subscription" 
+      ? (flutterwaveData.data.status === "successful" ? "active" : "inactive")
+      : existingPayment.subscription_status;
+
+    // Update payment status
     const { data: payment, error: updateError } = await supabaseClient
       .from("payments")
       .update({
         status: flutterwaveData.data.status === "successful" ? "successful" : "failed",
         metadata: {
-          ...flutterwaveData.data,
+          ...existingPayment.metadata,
           flw_ref: flutterwaveData.data.flw_ref,
           processor_response: flutterwaveData.data.processor_response,
           verification_completed: new Date().toISOString(),
         },
         updated_at: new Date().toISOString(),
-        subscription_status: flutterwaveData.data.status === "successful" ? "trial" : "inactive",
+        subscription_status: subscriptionStatus,
       })
       .eq("transaction_ref", reference)
       .select()
@@ -85,7 +101,12 @@ serve(async (req) => {
 
     // If payment is successful, update user profile if needed
     if (flutterwaveData.data.status === "successful") {
-      console.log(`Payment successful for reference: ${reference}. Starting trial period.`);
+      console.log(`Payment successful for reference: ${reference}.`);
+      
+      // For subscription payments, update trial status
+      if (existingPayment.payment_type === "subscription" && existingPayment.plan_id) {
+        console.log(`Activating subscription for user ${user.id} with plan ${existingPayment.plan_id}`);
+      }
       
       // Update user profile or trigger any necessary workflows
       const { error: profileError } = await supabaseClient

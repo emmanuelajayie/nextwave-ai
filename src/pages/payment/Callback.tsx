@@ -7,6 +7,7 @@ import MainLayout from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const PaymentCallback = () => {
   const [searchParams] = useSearchParams();
@@ -14,6 +15,7 @@ const PaymentCallback = () => {
   const [verifying, setVerifying] = useState(true);
   const [status, setStatus] = useState<"success" | "error" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>("");
+  const [paymentData, setPaymentData] = useState<any>(null);
 
   useEffect(() => {
     const verifyPayment = async () => {
@@ -28,11 +30,27 @@ const PaymentCallback = () => {
         
         if (paymentStatus === "successful") {
           setStatus("success");
+          setPaymentData(payment);
           toast.success(message || "Payment successful!");
           
           // If this was a subscription payment, update UI accordingly
           if (payment?.payment_type === "subscription") {
-            toast.success("Your subscription is now active!");
+            // Update subscription status to active if it was a subscription payment
+            if (payment.plan_id) {
+              const { error } = await supabase
+                .from("payments")
+                .update({ 
+                  subscription_status: "active",
+                  updated_at: new Date().toISOString()
+                })
+                .eq("id", payment.id);
+              
+              if (error) {
+                console.error("Error updating subscription status:", error);
+              } else {
+                toast.success("Your subscription is now active!");
+              }
+            }
           }
         } else {
           setStatus("error");
@@ -66,7 +84,11 @@ const PaymentCallback = () => {
               <div className="space-y-4">
                 <CheckCircle className="w-12 h-12 text-green-500 mx-auto" />
                 <h1 className="text-2xl font-bold text-green-600">Payment Successful!</h1>
-                <p className="text-gray-600">Thank you for your payment.</p>
+                <p className="text-gray-600">
+                  {paymentData?.payment_type === "subscription" 
+                    ? "Your subscription is now active." 
+                    : "Thank you for your payment."}
+                </p>
                 <Button 
                   onClick={() => navigate("/")}
                   className="w-full"

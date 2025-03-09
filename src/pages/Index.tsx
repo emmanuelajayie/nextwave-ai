@@ -12,6 +12,7 @@ import { ExportOptions } from "@/components/exports/ExportOptions";
 import { ScheduledTasks } from "@/components/automation/ScheduledTasks";
 import { FileStorage } from "@/components/storage/FileStorage";
 import { BusinessTypeSelect } from "@/components/onboarding/BusinessTypeSelect";
+import { SubscriptionAlert } from "@/components/subscription/SubscriptionAlert";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
@@ -38,6 +39,7 @@ const Index = () => {
     <MainLayout>
       {!payments && <BusinessTypeSelect />}
       <div className="space-y-6">
+        <SubscriptionAlert />
         <DashboardHeader />
         <FileStorage />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
