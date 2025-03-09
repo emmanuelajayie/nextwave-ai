@@ -1,3 +1,5 @@
+
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -10,30 +12,17 @@ import {
 } from "@/components/ui/table";
 import { RefreshCw, Link2Off, Eye } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
-const sources = [
-  {
-    id: 1,
-    name: "Sales Data 2024",
-    type: "Google Sheets",
-    lastSync: "2 hours ago",
-    status: "Connected",
-  },
-  {
-    id: 2,
-    name: "Marketing Metrics",
-    type: "Excel Online",
-    lastSync: "1 day ago",
-    status: "Error",
-  },
-  {
-    id: 3,
-    name: "Customer Analysis",
-    type: "Excel File",
-    lastSync: "Just now",
-    status: "Syncing",
-  },
-];
+interface DataSource {
+  id: number;
+  name: string;
+  type: string;
+  last_sync: string;
+  status: string;
+}
 
 const getStatusColor = (status: string) => {
   switch (status) {
@@ -49,6 +38,130 @@ const getStatusColor = (status: string) => {
 };
 
 export const DataSources = () => {
+  const [sources, setSources] = useState<DataSource[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const { data: user } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      return user;
+    },
+  });
+
+  const fetchDataSources = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from("data_sources")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+        
+      if (error) throw error;
+      
+      setSources(data || []);
+    } catch (error) {
+      console.error("Error fetching data sources:", error);
+      toast.error("Failed to fetch data sources");
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchDataSources();
+    }
+    
+    // Listen for updates from the DataImport component
+    const handleDataSourceUpdate = () => {
+      fetchDataSources();
+    };
+    
+    window.addEventListener("data-source-updated", handleDataSourceUpdate);
+    
+    return () => {
+      window.removeEventListener("data-source-updated", handleDataSourceUpdate);
+    };
+  }, [user]);
+
+  const handleRefresh = async (sourceId: number) => {
+    setIsRefreshing(true);
+    try {
+      await supabase
+        .from("data_sources")
+        .update({
+          last_sync: new Date().toISOString(),
+          status: "Syncing"
+        })
+        .eq("id", sourceId);
+        
+      // Simulate syncing process
+      setTimeout(async () => {
+        await supabase
+          .from("data_sources")
+          .update({
+            status: "Connected"
+          })
+          .eq("id", sourceId);
+          
+        fetchDataSources();
+      }, 2000);
+      
+      toast.success("Refreshing data source");
+    } catch (error) {
+      console.error("Error refreshing data source:", error);
+      toast.error("Failed to refresh data source");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  const handleView = (sourceId: number) => {
+    // In a real app, this would navigate to a data preview page
+    toast.info("Viewing data source details");
+  };
+
+  const handleDisconnect = async (sourceId: number) => {
+    try {
+      await supabase
+        .from("data_sources")
+        .delete()
+        .eq("id", sourceId);
+        
+      fetchDataSources();
+      toast.success("Data source disconnected");
+    } catch (error) {
+      console.error("Error disconnecting data source:", error);
+      toast.error("Failed to disconnect data source");
+    }
+  };
+
+  // If no custom sources yet, show the default mock data
+  const displaySources = sources.length > 0 ? sources : [
+    {
+      id: 1,
+      name: "Sales Data 2024",
+      type: "Google Sheets",
+      last_sync: "2 hours ago",
+      status: "Connected",
+    },
+    {
+      id: 2,
+      name: "Marketing Metrics",
+      type: "Excel Online",
+      last_sync: "1 day ago",
+      status: "Error",
+    },
+    {
+      id: 3,
+      name: "Customer Analysis",
+      type: "Excel File",
+      last_sync: "Just now",
+      status: "Syncing",
+    },
+  ];
+
   return (
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Connected Data Sources</h2>
@@ -63,11 +176,11 @@ export const DataSources = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sources.map((source) => (
+          {displaySources.map((source) => (
             <TableRow key={source.id}>
               <TableCell className="font-medium">{source.name}</TableCell>
               <TableCell>{source.type}</TableCell>
-              <TableCell>{source.lastSync}</TableCell>
+              <TableCell>{source.last_sync}</TableCell>
               <TableCell>
                 <Badge
                   variant="secondary"
@@ -81,21 +194,22 @@ export const DataSources = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => console.log("Refresh", source.id)}
+                    onClick={() => handleRefresh(source.id)}
+                    disabled={isRefreshing}
                   >
                     <RefreshCw className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => console.log("View", source.id)}
+                    onClick={() => handleView(source.id)}
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => console.log("Disconnect", source.id)}
+                    onClick={() => handleDisconnect(source.id)}
                   >
                     <Link2Off className="h-4 w-4" />
                   </Button>
