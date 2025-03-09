@@ -9,9 +9,50 @@ import { TechInsights } from "./TechInsights";
 import { RealEstateInsights } from "./RealEstateInsights";
 import { DataSeeder } from "../data/DataSeeder";
 import { ShoppingCart, Truck, LineChart, Laptop, Building, Loader2 } from "lucide-react";
+import { ErrorBoundary } from "react-error-boundary";
+
+// Fallback component for error states
+const ErrorFallback = ({ error, resetErrorBoundary }: { error: Error, resetErrorBoundary: () => void }) => {
+  return (
+    <div className="p-4 border border-red-200 rounded-md bg-red-50">
+      <h3 className="text-lg font-medium text-red-800">Something went wrong with this insight</h3>
+      <p className="text-sm text-red-600 mt-1">{error.message}</p>
+      <button 
+        onClick={resetErrorBoundary}
+        className="mt-2 px-3 py-1 bg-red-100 text-red-800 rounded-md text-sm hover:bg-red-200"
+      >
+        Try again
+      </button>
+    </div>
+  );
+};
+
+// Safe wrapper for each insight component
+const SafeInsightWrapper = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <ErrorBoundary
+      FallbackComponent={ErrorFallback}
+      onReset={() => {
+        // Reset the component state here if needed
+      }}
+    >
+      {children}
+    </ErrorBoundary>
+  );
+};
 
 export const IndustryInsights = () => {
   const [selectedIndustry, setSelectedIndustry] = useState<"ecommerce" | "logistics" | "finance" | "tech" | "realestate">("ecommerce");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleTabChange = (value: string) => {
+    setIsLoading(true);
+    // Simulate loading time for tab change
+    setTimeout(() => {
+      setSelectedIndustry(value as "ecommerce" | "logistics" | "finance" | "tech" | "realestate");
+      setIsLoading(false);
+    }, 300);
+  };
 
   return (
     <Card className="p-6">
@@ -27,7 +68,7 @@ export const IndustryInsights = () => {
 
       <Tabs 
         defaultValue="ecommerce" 
-        onValueChange={(value) => setSelectedIndustry(value as "ecommerce" | "logistics" | "finance" | "tech" | "realestate")}
+        onValueChange={handleTabChange}
       >
         <TabsList className="grid w-full grid-cols-5 mb-6">
           <TabsTrigger value="ecommerce" className="flex items-center gap-2">
@@ -52,25 +93,43 @@ export const IndustryInsights = () => {
           </TabsTrigger>
         </TabsList>
         
-        <TabsContent value="ecommerce">
-          <EcommerceInsights />
-        </TabsContent>
-        
-        <TabsContent value="logistics">
-          <LogisticsInsights />
-        </TabsContent>
-        
-        <TabsContent value="finance">
-          <FinanceInsights />
-        </TabsContent>
+        {isLoading ? (
+          <div className="p-8 flex justify-center items-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            <TabsContent value="ecommerce">
+              <SafeInsightWrapper>
+                <EcommerceInsights />
+              </SafeInsightWrapper>
+            </TabsContent>
+            
+            <TabsContent value="logistics">
+              <SafeInsightWrapper>
+                <LogisticsInsights />
+              </SafeInsightWrapper>
+            </TabsContent>
+            
+            <TabsContent value="finance">
+              <SafeInsightWrapper>
+                <FinanceInsights />
+              </SafeInsightWrapper>
+            </TabsContent>
 
-        <TabsContent value="tech">
-          <TechInsights />
-        </TabsContent>
+            <TabsContent value="tech">
+              <SafeInsightWrapper>
+                <TechInsights />
+              </SafeInsightWrapper>
+            </TabsContent>
 
-        <TabsContent value="realestate">
-          <RealEstateInsights />
-        </TabsContent>
+            <TabsContent value="realestate">
+              <SafeInsightWrapper>
+                <RealEstateInsights />
+              </SafeInsightWrapper>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </Card>
   );

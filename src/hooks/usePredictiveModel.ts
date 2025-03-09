@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -22,13 +22,30 @@ export interface PredictionResponse {
 export const usePredictiveModel = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [lastError, setLastError] = useState<string | null>(null);
 
-  // Get models from the database
-  const { data: models, isLoading: isLoadingModels, refetch: refetchModels } = useQuery({
+  useEffect(() => {
+    // Cleanup function to reset progress when component unmounts
+    return () => {
+      setProgress(0);
+      setIsGenerating(false);
+    };
+  }, []);
+
+  // Get models from the database with improved error handling
+  const { data: models, isLoading: isLoadingModels, refetch: refetchModels, error: modelsError } = useQuery({
     queryKey: ['predictive-models'],
     queryFn: async () => {
       console.log("Fetching predictive models");
       try {
+        // First check if user is authenticated
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.log("No active session, returning empty models array");
+          return [];
+        }
+        
         const { data, error } = await supabase
           .from('predictive_models')
           .select('*')
@@ -36,6 +53,7 @@ export const usePredictiveModel = () => {
         
         if (error) {
           console.error("Error fetching models:", error);
+          setLastError(error.message);
           throw error;
         }
         
@@ -43,16 +61,33 @@ export const usePredictiveModel = () => {
         return data || [];
       } catch (error) {
         console.error("Exception in queryFn:", error);
+        setLastError(error instanceof Error ? error.message : "Unknown error fetching models");
         return [];
       }
-    }
+    },
+    // Add retry and caching options
+    retry: 2,
+    staleTime: 60000, // 1 minute
+    refetchOnWindowFocus: false
   });
 
-  // Generate a new prediction
+  // Generate a new prediction with improved error handling
   const generatePrediction = async (params: PredictionRequest): Promise<PredictionResponse> => {
     try {
       setIsGenerating(true);
+      setProgress(0);
+      setLastError(null);
       console.log("Generating prediction with params:", params);
+      
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        const error = new Error("Authentication required");
+        console.error(error);
+        toast.error(error.message);
+        throw error;
+      }
       
       // First create a pending model record
       const { data: pendingModel, error: pendingError } = await supabase
@@ -64,13 +99,15 @@ export const usePredictiveModel = () => {
           target_variable: params.target,
           data_source: params.dataSource,
           status: 'training',
-          training_progress: 0
+          training_progress: 0,
+          user_id: session.user.id
         })
         .select()
         .single();
       
       if (pendingError) {
         console.error("Error creating pending model:", pendingError);
+        setLastError(pendingError.message);
         throw pendingError;
       }
       
@@ -82,13 +119,6 @@ export const usePredictiveModel = () => {
           return Math.min(next, 90);
         });
       }, 1000);
-
-      // Get session for auth header
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("Authentication required");
-      }
       
       // Call the predict edge function
       console.log("Calling predict edge function");
@@ -100,21 +130,33 @@ export const usePredictiveModel = () => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${session.access_token}`
           },
-          body: JSON.stringify(params)
+          body: JSON.stringify({
+            ...params,
+            userId: session.user.id
+          })
         }
       );
       
       clearInterval(progressInterval);
-      setProgress(100);
       
       if (!response.ok) {
-        const error = await response.json();
-        console.error("Edge function error:", error);
-        throw new Error(error.message || "Failed to generate prediction");
+        let errorMessage = "Failed to generate prediction";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          // If we can't parse the error response, use the default message
+        }
+        
+        console.error("Edge function error:", errorMessage);
+        setLastError(errorMessage);
+        setProgress(0);
+        throw new Error(errorMessage);
       }
       
       const result = await response.json();
       console.log("Prediction result:", result);
+      setProgress(100);
       
       // Refetch the models to get the updated list
       refetchModels();
@@ -122,17 +164,26 @@ export const usePredictiveModel = () => {
       return result;
     } catch (error) {
       console.error("Error generating prediction:", error);
-      toast.error("Failed to generate prediction: " + (error instanceof Error ? error.message : "Unknown error"));
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      setLastError(errorMessage);
+      toast.error("Failed to generate prediction: " + errorMessage);
       throw error;
     } finally {
       setIsGenerating(false);
     }
   };
 
-  // Update an existing model
-  const { mutate: updateModel } = useMutation({
+  // Update an existing model with improved error handling
+  const { mutate: updateModel, isPending: isUpdating } = useMutation({
     mutationFn: async ({ id, ...updates }: { id: string, [key: string]: any }) => {
       console.log("Updating model:", id, updates);
+      
+      // Check authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Authentication required");
+      }
+      
       const { data, error } = await supabase
         .from('predictive_models')
         .update(updates)
@@ -142,6 +193,7 @@ export const usePredictiveModel = () => {
       
       if (error) {
         console.error("Error updating model:", error);
+        setLastError(error.message);
         throw error;
       }
       return data;
@@ -152,7 +204,9 @@ export const usePredictiveModel = () => {
     },
     onError: (error) => {
       console.error("Error updating model:", error);
-      toast.error("Failed to update model: " + (error instanceof Error ? error.message : "Unknown error"));
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      setLastError(errorMessage);
+      toast.error("Failed to update model: " + errorMessage);
     }
   });
 
@@ -160,8 +214,11 @@ export const usePredictiveModel = () => {
     models,
     isLoadingModels,
     isGenerating,
+    isUpdating,
     progress,
     generatePrediction,
-    updateModel
+    updateModel,
+    lastError,
+    modelsError
   };
 };
