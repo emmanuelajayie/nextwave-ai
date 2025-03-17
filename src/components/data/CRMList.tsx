@@ -13,10 +13,15 @@ import ErrorLogger from "@/utils/errorLogger";
 type CRMIntegration = {
   id: string;
   name: string;
-  crm_type: string;
+  crm_type: "hubspot" | "zoho" | "salesforce" | "custom";
   status: string;
   last_sync_at?: string;
   created_at: string;
+  updated_at: string;
+  api_key: string;
+  config: any;
+  oauth_data: any;
+  webhook_url: string;
 };
 
 const ITEMS_PER_PAGE = 10;
@@ -134,7 +139,7 @@ export const CRMList = () => {
               {integrations.map((integration) => (
                 <CRMTableRow
                   key={integration.id}
-                  integration={integration}
+                  integration={integration as any}
                   onSync={handleSync}
                   onDelete={handleDelete}
                 />

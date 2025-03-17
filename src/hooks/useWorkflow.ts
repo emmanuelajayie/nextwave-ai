@@ -50,7 +50,13 @@ export const useWorkflow = () => {
           throw error;
         }
 
-        return data || [];
+        // Ensure proper typing of the config field
+        return data?.map(workflow => ({
+          ...workflow,
+          config: typeof workflow.config === 'string' 
+            ? JSON.parse(workflow.config) 
+            : workflow.config
+        })) || [];
       } catch (error) {
         console.error('Error fetching workflows:', error);
         setLastError(error instanceof Error ? error : new Error('Failed to load workflows'));

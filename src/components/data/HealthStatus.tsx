@@ -41,8 +41,7 @@ export const HealthStatus = () => {
         
         if (storageError) {
           // Call the create-storage-bucket function to setup bucket if needed
-          const functionUrl = `${supabase.functions.url}/create-storage-bucket`;
-          const createBucketResponse = await fetch(functionUrl, {
+          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-storage-bucket`, {
             method: 'POST',
             headers: {
               Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
@@ -50,8 +49,8 @@ export const HealthStatus = () => {
             }
           });
           
-          if (!createBucketResponse.ok) {
-            const errorData = await createBucketResponse.json();
+          if (!response.ok) {
+            const errorData = await response.json();
             healthIssues.push(`Storage error: ${errorData.error || 'Unable to create storage bucket'}`);
           }
         }
