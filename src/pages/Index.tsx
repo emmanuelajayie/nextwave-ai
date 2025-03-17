@@ -13,6 +13,8 @@ import { ScheduledTasks } from "@/components/automation/ScheduledTasks";
 import { FileStorage } from "@/components/storage/FileStorage";
 import { BusinessTypeSelect } from "@/components/onboarding/BusinessTypeSelect";
 import { SubscriptionAlert } from "@/components/subscription/SubscriptionAlert";
+import { DataImport } from "@/components/data/DataImport";
+import { DataSources } from "@/components/data/DataSources";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
@@ -45,6 +47,10 @@ const Index = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TeamManagement />
           <ExportOptions />
+        </div>
+        <div className="space-y-6">
+          <DataImport />
+          <DataSources />
         </div>
         <SetupChecklist />
         <DataCleaningPreferences />
