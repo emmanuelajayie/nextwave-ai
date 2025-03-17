@@ -15,6 +15,7 @@ import { BusinessTypeSelect } from "@/components/onboarding/BusinessTypeSelect";
 import { SubscriptionAlert } from "@/components/subscription/SubscriptionAlert";
 import { DataImport } from "@/components/data/DataImport";
 import { DataSources } from "@/components/data/DataSources";
+import { HealthStatus } from "@/components/data/HealthStatus";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
@@ -22,18 +23,27 @@ const Index = () => {
   const { data: payments } = useQuery({
     queryKey: ['payments'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
 
-      const { data } = await supabase
-        .from('payments')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        const { data, error } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
 
-      return data;
+        if (error && !error.message.includes("JSON object requested, multiple (or no) rows returned")) {
+          throw error;
+        }
+
+        return data;
+      } catch (error) {
+        console.error("Error fetching payment data:", error);
+        return null;
+      }
     },
   });
 
@@ -43,6 +53,7 @@ const Index = () => {
       <div className="space-y-6">
         <SubscriptionAlert />
         <DashboardHeader />
+        <HealthStatus />
         <FileStorage />
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TeamManagement />

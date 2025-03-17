@@ -10,16 +10,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RefreshCw, Link2Off, Eye } from "lucide-react";
+import { RefreshCw, Link2Off, Eye, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Database } from "@/integrations/supabase/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import ErrorLogger from "@/utils/errorLogger";
 
-// Define a type for data sources based on our database schema
-type DataSource = Database['public']['Tables']['data_sources']['Row'];
+// Define a type for data sources
+type DataSource = {
+  id: string;
+  name: string;
+  type: string;
+  last_sync: string | null;
+  status: string | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+};
 
 const getStatusColor = (status: string | null) => {
   switch (status) {
@@ -37,6 +47,7 @@ const getStatusColor = (status: string | null) => {
 export const DataSources = () => {
   const [sources, setSources] = useState<DataSource[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const { data: user } = useQuery({
     queryKey: ["user"],
@@ -50,18 +61,27 @@ export const DataSources = () => {
     if (!user) return;
     
     try {
+      setError(null);
+      console.log("Fetching data sources for user:", user.id);
+      
       const { data, error } = await supabase
         .from("data_sources")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
         
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching data sources:", error);
+        setError(error.message);
+        throw error;
+      }
       
+      console.log("Fetched data sources:", data?.length || 0);
       setSources(data || []);
     } catch (error) {
-      console.error("Error fetching data sources:", error);
-      toast.error("Failed to fetch data sources");
+      const errorMsg = error instanceof Error ? error.message : "Failed to fetch data sources";
+      console.error("Error in fetchDataSources:", errorMsg);
+      ErrorLogger.logError(error instanceof Error ? error : new Error(errorMsg));
     }
   };
 
@@ -182,6 +202,16 @@ export const DataSources = () => {
   return (
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Connected Data Sources</h2>
+      
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <Table>
         <TableHeader>
           <TableRow>

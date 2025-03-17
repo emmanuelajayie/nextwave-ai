@@ -6,10 +6,7 @@ import { FileSpreadsheet, Table, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Database } from "@/integrations/supabase/types";
-
-// Define a type for data sources
-type DataSource = Database['public']['Tables']['data_sources']['Row'];
+import ErrorLogger from "@/utils/errorLogger";
 
 export const DataImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -32,19 +29,27 @@ export const DataImport = () => {
       
       // Record the connection in Supabase
       if (user) {
-        await supabase.from("data_sources").insert({
-          user_id: user.id,
-          name: "Google Sheets Data",
-          type: "google_sheets",
-          status: "Connected",
-          last_sync: new Date().toISOString()
-        });
+        const { error } = await supabase
+          .from("data_sources")
+          .insert({
+            user_id: user.id,
+            name: "Google Sheets Data",
+            type: "google_sheets",
+            status: "Connected",
+            last_sync: new Date().toISOString()
+          });
+          
+        if (error) throw error;
       }
       
       toast.success("Successfully connected to Google Sheets");
+      
+      // Notify that a data source was updated
+      window.dispatchEvent(new CustomEvent("data-source-updated"));
     } catch (error) {
       console.error("Error connecting to Google Sheets:", error);
       toast.error("Failed to connect to Google Sheets");
+      ErrorLogger.logError(error instanceof Error ? error : new Error("Failed to connect to Google Sheets"));
     } finally {
       setIsConnecting(null);
     }
@@ -59,19 +64,27 @@ export const DataImport = () => {
       
       // Record the connection in Supabase
       if (user) {
-        await supabase.from("data_sources").insert({
-          user_id: user.id,
-          name: "Excel Online Data",
-          type: "excel_online",
-          status: "Connected",
-          last_sync: new Date().toISOString()
-        });
+        const { error } = await supabase
+          .from("data_sources")
+          .insert({
+            user_id: user.id,
+            name: "Excel Online Data",
+            type: "excel_online",
+            status: "Connected",
+            last_sync: new Date().toISOString()
+          });
+          
+        if (error) throw error;
       }
       
       toast.success("Successfully connected to Excel Online");
+      
+      // Notify that a data source was updated
+      window.dispatchEvent(new CustomEvent("data-source-updated"));
     } catch (error) {
       console.error("Error connecting to Excel Online:", error);
       toast.error("Failed to connect to Excel Online");
+      ErrorLogger.logError(error instanceof Error ? error : new Error("Failed to connect to Excel Online"));
     } finally {
       setIsConnecting(null);
     }
@@ -94,22 +107,30 @@ export const DataImport = () => {
         if (uploadError) throw uploadError;
         
         // Record the file upload in the database
-        await supabase.from("file_storage").insert({
-          file_name: file.name,
-          file_path: fileName,
-          folder_path: "/excel_uploads/",
-          size: file.size,
-          mime_type: file.type,
-          is_folder: false
-        });
+        const { error: fileStorageError } = await supabase
+          .from("file_storage")
+          .insert({
+            file_name: file.name,
+            file_path: fileName,
+            folder_path: "/excel_uploads/",
+            size: file.size,
+            mime_type: file.type,
+            is_folder: false
+          });
+          
+        if (fileStorageError) throw fileStorageError;
         
-        await supabase.from("data_sources").insert({
-          user_id: user.id,
-          name: file.name,
-          type: "excel_file",
-          status: "Syncing",
-          last_sync: new Date().toISOString()
-        });
+        const { error: dataSourceError } = await supabase
+          .from("data_sources")
+          .insert({
+            user_id: user.id,
+            name: file.name,
+            type: "excel_file",
+            status: "Syncing",
+            last_sync: new Date().toISOString()
+          });
+          
+        if (dataSourceError) throw dataSourceError;
       }
       
       toast.success("File uploaded successfully");
@@ -119,6 +140,7 @@ export const DataImport = () => {
     } catch (error) {
       console.error("Error uploading file:", error);
       toast.error("Failed to upload file");
+      ErrorLogger.logError(error instanceof Error ? error : new Error("Failed to upload file"));
     } finally {
       setIsUploading(false);
       // Reset the file input

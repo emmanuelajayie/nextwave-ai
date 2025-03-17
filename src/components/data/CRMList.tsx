@@ -1,14 +1,23 @@
+
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Table, TableBody } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CRMTableHeader } from "./crm/CRMTableHeader";
 import { CRMTableRow } from "./crm/CRMTableRow";
-import { Database } from "@/integrations/supabase/types";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import ErrorLogger from "@/utils/errorLogger";
 
-type CRMIntegration = Database["public"]["Tables"]["crm_integrations"]["Row"];
+type CRMIntegration = {
+  id: string;
+  name: string;
+  crm_type: string;
+  status: string;
+  last_sync_at?: string;
+  created_at: string;
+};
 
 const ITEMS_PER_PAGE = 10;
 
@@ -17,9 +26,11 @@ export const CRMList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchIntegrations = async () => {
     try {
+      setError(null);
       console.log("Fetching CRM integrations, page:", page);
       const from = page * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
@@ -32,6 +43,7 @@ export const CRMList = () => {
 
       if (error) {
         console.error("Error fetching integrations:", error);
+        setError(error.message);
         throw error;
       }
 
@@ -40,7 +52,9 @@ export const CRMList = () => {
       setHasMore((count || 0) > (page + 1) * ITEMS_PER_PAGE);
     } catch (error) {
       console.error("Error fetching integrations:", error);
+      const errorMsg = error instanceof Error ? error.message : "Failed to load CRM integrations";
       toast.error("Failed to load CRM integrations. Please try again.");
+      ErrorLogger.logError(error instanceof Error ? error : new Error(errorMsg));
     } finally {
       setIsLoading(false);
     }
@@ -65,6 +79,7 @@ export const CRMList = () => {
     } catch (error) {
       console.error("Error syncing:", error);
       toast.error("Failed to sync with CRM. Please try again.");
+      ErrorLogger.logError(error instanceof Error ? error : new Error("Failed to sync with CRM"));
     }
   };
 
@@ -84,6 +99,7 @@ export const CRMList = () => {
     } catch (error) {
       console.error("Error deleting integration:", error);
       toast.error("Failed to remove integration. Please try again.");
+      ErrorLogger.logError(error instanceof Error ? error : new Error("Failed to remove integration"));
     }
   };
 
@@ -96,6 +112,15 @@ export const CRMList = () => {
   return (
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">CRM Integrations</h2>
+      
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
       
       {isLoading && page === 0 ? (
         <div className="flex items-center justify-center p-8">

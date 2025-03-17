@@ -1,86 +1,125 @@
 
+import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
-export interface WorkflowConfig {
-  analytics: {
-    schedule: string;
-    time: string;
+export type WorkflowConfig = {
+  analytics?: {
+    schedule?: string;
+    time?: string;
   };
-  reports: {
-    schedule: string;
-    time: string;
+  reports?: {
+    schedule?: string;
+    time?: string;
   };
-  workflow: {
-    schedule: string;
-    time: string;
-    days: string[];
+  workflow?: {
+    schedule?: string;
+    time?: string;
+    days?: string[];
   };
-  notifications: {
-    email: boolean;
+  notifications?: {
+    email?: boolean;
   };
-}
+};
 
 export const useWorkflow = () => {
-  // Fetch existing workflow configuration
-  const { data: workflows, isLoading } = useQuery({
+  const [lastError, setLastError] = useState<Error | null>(null);
+
+  // Fetch workflows
+  const { data: workflows, isLoading, refetch, error } = useQuery({
     queryKey: ['workflows'],
     queryFn: async () => {
       console.log('Fetching workflows...');
-      const { data, error } = await supabase
-        .from('workflows')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(1);
+      try {
+        const { data, error } = await supabase
+          .from('workflows')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(1);
 
-      if (error) {
+        if (error) {
+          setLastError(new Error(error.message));
+          throw error;
+        }
+
+        return data || [];
+      } catch (error) {
         console.error('Error fetching workflows:', error);
+        setLastError(error instanceof Error ? error : new Error('Failed to load workflows'));
         throw error;
       }
-
-      console.log('Fetched workflows:', data);
-      return data;
+    },
+    retry: (failureCount, error) => {
+      // Don't retry on policy errors
+      if (error instanceof Error && 
+          (error.message.includes("recursion") || error.message.includes("permission"))) {
+        return false;
+      }
+      return failureCount < 1;
     }
   });
 
   // Update workflow configuration
   const { mutate: updateWorkflow, isPending } = useMutation({
     mutationFn: async (config: WorkflowConfig) => {
-      console.log('Updating workflow configuration...');
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        throw new Error("User must be authenticated to update workflows");
+        throw new Error('User not authenticated');
       }
 
-      const workflowData = {
-        name: 'Automated Tasks',
-        config: JSON.parse(JSON.stringify(config)), // Convert WorkflowConfig to a plain object
-        status: 'active',
-        created_by: user.id
-      };
+      if (workflows && workflows.length > 0) {
+        // Update existing workflow
+        const { data, error } = await supabase
+          .from('workflows')
+          .update({
+            config,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', workflows[0].id)
+          .select();
 
-      const { data, error } = await supabase
-        .from('workflows')
-        .upsert(workflowData)
-        .select();
+        if (error) {
+          throw error;
+        }
 
-      if (error) {
-        console.error('Error updating workflow:', error);
-        throw error;
+        return data;
+      } else {
+        // Create new workflow
+        const { data, error } = await supabase
+          .from('workflows')
+          .insert({
+            name: 'Scheduled Tasks',
+            config,
+            status: 'active',
+            created_by: user.id
+          })
+          .select();
+
+        if (error) {
+          throw error;
+        }
+
+        return data;
       }
-
-      return data;
     },
     onSuccess: () => {
-      toast.success('Schedule settings saved successfully');
+      toast.success('Workflow settings saved');
+      refetch();
     },
     onError: (error) => {
-      console.error('Error saving schedule:', error);
-      toast.error('Failed to save schedule settings');
-    },
+      console.error('Error updating workflow:', error);
+      setLastError(error instanceof Error ? error : new Error('Failed to update workflow'));
+      toast.error('Failed to save workflow settings');
+    }
   });
 
-  return { workflows, isLoading, updateWorkflow, isPending };
+  return {
+    workflows,
+    isLoading,
+    updateWorkflow,
+    isPending,
+    error: lastError || error
+  };
 };

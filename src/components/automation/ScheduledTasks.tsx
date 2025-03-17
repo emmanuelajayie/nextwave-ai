@@ -3,12 +3,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Clock, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { Clock, Loader2, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
 import { AnalyticsSection } from "./sections/AnalyticsSection";
 import { ReportsSection } from "./sections/ReportsSection";
 import { WorkflowSection } from "./sections/WorkflowSection";
 import { useWorkflow } from "@/hooks/useWorkflow";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const ScheduledTasks = () => {
   const [emailNotifications, setEmailNotifications] = useState(false);
@@ -19,8 +20,17 @@ export const ScheduledTasks = () => {
   const [workflowSchedule, setWorkflowSchedule] = useState("");
   const [workflowTime, setWorkflowTime] = useState("");
   const [workflowDays, setWorkflowDays] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  const { workflows, isLoading, updateWorkflow, isPending } = useWorkflow();
+  const { workflows, isLoading, updateWorkflow, isPending, error: workflowError } = useWorkflow();
+
+  useEffect(() => {
+    if (workflowError) {
+      setError(workflowError instanceof Error ? workflowError.message : "Failed to load workflows");
+    } else {
+      setError(null);
+    }
+  }, [workflowError]);
 
   // Handle schedule changes
   const handleScheduleChange = (value: string, type: 'analytics' | 'reports' | 'workflow') => {
@@ -82,6 +92,16 @@ export const ScheduledTasks = () => {
   return (
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Scheduled Tasks</h2>
+      
+      {error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-6">
         <AnalyticsSection
           schedule={analyticsSchedule}
@@ -122,7 +142,7 @@ export const ScheduledTasks = () => {
         <Button 
           className="w-full" 
           onClick={handleSubmit}
-          disabled={isPending}
+          disabled={isPending || !!error}
         >
           {isPending ? (
             <>
