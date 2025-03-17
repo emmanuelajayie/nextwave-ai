@@ -1,49 +1,33 @@
+
 import MainLayout from "@/components/layout/MainLayout";
-import { Button } from "@/components/ui/button";
-import { Download, Share2 } from "lucide-react";
-import { DashboardTemplates } from "@/components/dashboard/DashboardTemplates";
-import { CustomizableWidgets } from "@/components/dashboard/CustomizableWidgets";
+import MetricsGrid from "@/components/dashboard/MetricsGrid";
+import { GoalsOverview } from "@/components/goals/GoalsOverview";
 import InsightsSection from "@/components/dashboard/InsightsSection";
-import { toast } from "sonner";
+import { CustomizableWidgets } from "@/components/dashboard/CustomizableWidgets";
+import { DashboardTemplates } from "@/components/dashboard/DashboardTemplates";
+import { QuickActions } from "@/components/dashboard/QuickActions";
+import { RecentActivity } from "@/components/dashboard/RecentActivity";
+import { ExportOptions } from "@/components/exports/ExportOptions";
+import { HealthStatus } from "@/components/data/HealthStatus";
 
 const Dashboards = () => {
-  const handleExport = () => {
-    console.log("Exporting dashboard as PDF");
-    toast.success("Dashboard exported successfully");
-  };
-
-  const handleShare = () => {
-    console.log("Generating public share link");
-    toast.success("Share link copied to clipboard");
-  };
-
   return (
     <MainLayout>
-      <div className="space-y-8">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              Interactive Dashboards
-            </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
-              Visualize and analyze your data insights
-            </p>
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Dashboards</h1>
+        <HealthStatus />
+        <div className="grid gap-6">
+          <MetricsGrid />
+          <div className="grid lg:grid-cols-2 gap-6">
+            <GoalsOverview />
+            <RecentActivity />
           </div>
-          <div className="flex gap-4">
-            <Button onClick={handleExport} variant="outline">
-              <Download className="mr-2 h-4 w-4" />
-              Export PDF
-            </Button>
-            <Button onClick={handleShare} variant="outline">
-              <Share2 className="mr-2 h-4 w-4" />
-              Share
-            </Button>
-          </div>
+          <InsightsSection />
+          <CustomizableWidgets />
+          <DashboardTemplates />
+          <QuickActions />
+          <ExportOptions />
         </div>
-
-        <DashboardTemplates />
-        <CustomizableWidgets />
-        <InsightsSection />
       </div>
     </MainLayout>
   );

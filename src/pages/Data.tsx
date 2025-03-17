@@ -1,3 +1,4 @@
+
 import MainLayout from "@/components/layout/MainLayout";
 import { DataImport } from "@/components/data/DataImport";
 import { DataPreview } from "@/components/data/DataPreview";
@@ -5,12 +6,14 @@ import { DataSources } from "@/components/data/DataSources";
 import { CRMIntegration } from "@/components/data/CRMIntegration";
 import { CRMList } from "@/components/data/CRMList";
 import { WebhookConfig } from "@/components/data/WebhookConfig";
+import { HealthStatus } from "@/components/data/HealthStatus";
 
 const Data = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Data Management</h1>
+        <HealthStatus />
         <div className="grid gap-6">
           <DataImport />
           <div className="grid md:grid-cols-2 gap-6">

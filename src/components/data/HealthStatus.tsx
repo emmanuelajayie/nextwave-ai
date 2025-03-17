@@ -7,7 +7,7 @@ import { ShieldCheck, AlertCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const HealthStatus = () => {
+export const HealthStatus = ({ showInCard = true }) => {
   const [status, setStatus] = useState<'checking' | 'healthy' | 'issues'>('checking');
   const [errors, setErrors] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -81,8 +81,8 @@ export const HealthStatus = () => {
     checkSystemHealth();
   }, []);
 
-  return (
-    <Card className="p-6">
+  const healthContent = (
+    <>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg font-semibold">System Health</h2>
         <Button 
@@ -130,6 +130,12 @@ export const HealthStatus = () => {
           </div>
         </div>
       )}
-    </Card>
+    </>
   );
+
+  if (showInCard) {
+    return <Card className="p-6">{healthContent}</Card>;
+  }
+
+  return <div className="p-4 border rounded-lg">{healthContent}</div>;
 };
