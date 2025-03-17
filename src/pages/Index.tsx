@@ -10,13 +10,11 @@ import { ModelTraining } from "@/components/predictive/ModelTraining";
 import { DataCleaningPreferences } from "@/components/setup/DataCleaningPreferences";
 import { TeamManagement } from "@/components/collaboration/TeamManagement";
 import { ExportOptions } from "@/components/exports/ExportOptions";
-import { ScheduledTasks } from "@/components/automation/ScheduledTasks";
 import { FileStorage } from "@/components/storage/FileStorage";
 import { BusinessTypeSelect } from "@/components/onboarding/BusinessTypeSelect";
 import { SubscriptionAlert } from "@/components/subscription/SubscriptionAlert";
 import { DataImport } from "@/components/data/DataImport";
 import { DataSources } from "@/components/data/DataSources";
-import { HealthStatus } from "@/components/data/HealthStatus";
 import { CRMIntegration } from "@/components/data/CRMIntegration";
 import { CRMList } from "@/components/data/CRMList";
 import { useQuery } from "@tanstack/react-query";
@@ -59,7 +57,6 @@ const Index = () => {
       <div className="space-y-6">
         <SubscriptionAlert />
         <DashboardHeader />
-        <HealthStatus />
         
         <div className="rounded-lg border">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -86,7 +83,6 @@ const Index = () => {
             
             <TabsContent value="collect" className="p-4 space-y-6">
               <h2 className="text-lg font-semibold mb-2">Step 1: Data Collection</h2>
-              <ScheduledTasks />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <CRMIntegration />
                 <CRMList />
@@ -98,7 +94,6 @@ const Index = () => {
             <TabsContent value="clean" className="p-4 space-y-6">
               <h2 className="text-lg font-semibold mb-2">Step 2: Data Cleaning</h2>
               <DataCleaningPreferences />
-              {/* We would need a data preview/cleaning interface here */}
               <p className="text-muted-foreground">
                 Your data is being scanned for inconsistencies and missing values. 
                 Configure your cleaning preferences above.

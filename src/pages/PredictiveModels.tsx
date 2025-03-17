@@ -6,14 +6,14 @@ import { ModelInsights } from "@/components/predictive/ModelInsights";
 import { ModelPerformance } from "@/components/predictive/ModelPerformance";
 import { ModelTuning } from "@/components/predictive/ModelTuning";
 import { ModelDeployment } from "@/components/predictive/ModelDeployment";
-import { HealthStatus } from "@/components/data/HealthStatus";
+import { AutomationSettings } from "@/components/automation/AutomationSettings";
 
 const PredictiveModels = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Predictive Models</h1>
-        <HealthStatus />
+        <AutomationSettings />
         <div className="grid gap-6">
           <ModelTraining />
           <div className="grid lg:grid-cols-2 gap-6">
