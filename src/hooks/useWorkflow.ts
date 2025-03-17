@@ -21,6 +21,13 @@ export type WorkflowConfig = {
   notifications?: {
     email?: boolean;
   };
+  dataSources?: {
+    crmTypes?: string[];
+    storagePreference?: string;
+    sortBy?: string;
+    cleaningPreference?: string;
+    automaticModeling?: boolean;
+  };
 };
 
 export const useWorkflow = () => {
