@@ -13,6 +13,9 @@ const PredictiveModels = () => {
     <MainLayout>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Predictive Models</h1>
+        <p className="text-muted-foreground mb-6">
+          Build predictive models based on your cleaned data to forecast trends and outcomes.
+        </p>
         <AutomationSettings />
         <div className="grid gap-6">
           <ModelTraining />

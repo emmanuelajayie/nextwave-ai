@@ -11,6 +11,9 @@ const DataCleaning = () => {
     <MainLayout>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Data Cleaning</h1>
+        <p className="text-muted-foreground mb-6">
+          Clean and prepare your data for analysis. Remove inconsistencies, handle missing values, and enrich your datasets.
+        </p>
         <div className="grid gap-6">
           <DataCleaningPreferences />
           <DataCleaningTools onCleaningComplete={() => console.log("Cleaning complete")} />

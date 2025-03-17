@@ -14,6 +14,9 @@ const Dashboards = () => {
     <MainLayout>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Dashboards</h1>
+        <p className="text-muted-foreground mb-6">
+          Visualize your data with interactive dashboards, charts, and insights.
+        </p>
         <div className="grid gap-6">
           <MetricsGrid />
           <div className="grid lg:grid-cols-2 gap-6">

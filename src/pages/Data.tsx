@@ -12,7 +12,10 @@ const Data = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Data Management</h1>
+        <h1 className="text-3xl font-bold">Data Collection</h1>
+        <p className="text-muted-foreground mb-6">
+          Connect to your CRM systems, import data from various sources, and set up automated data collection.
+        </p>
         <ScheduledTasks />
         <div className="grid gap-6">
           <DataImport />
