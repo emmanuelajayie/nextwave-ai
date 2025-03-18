@@ -4,12 +4,12 @@ import MainLayout from "@/components/layout/MainLayout";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import MetricsGrid from "@/components/dashboard/MetricsGrid";
 import { GoalsOverview } from "@/components/goals/GoalsOverview";
-import InsightsSection from "@/components/dashboard/InsightsSection";
 import { SetupChecklist } from "@/components/setup/SetupChecklist";
 import { FileStorage } from "@/components/storage/FileStorage";
 import { TeamManagement } from "@/components/collaboration/TeamManagement";
 import { BusinessTypeSelect } from "@/components/onboarding/BusinessTypeSelect";
 import { SubscriptionAlert } from "@/components/subscription/SubscriptionAlert";
+import RecentActivity from "@/components/dashboard/RecentActivity";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
@@ -56,7 +56,7 @@ const Index = () => {
           <MetricsGrid />
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <GoalsOverview />
-            <InsightsSection />
+            <RecentActivity />
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <FileStorage />
