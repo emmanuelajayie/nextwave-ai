@@ -62,8 +62,9 @@ export const BusinessTypeSelect = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h2 className="text-2xl font-bold text-center mb-6">Select Your Business Type</h2>
+    <div className="max-w-4xl mx-auto p-6 mb-8">
+      <h2 className="text-2xl font-bold text-center mb-2">Select Your Business Type</h2>
+      <p className="text-center text-muted-foreground mb-6">This is a one-time setup fee. Monthly subscription options will be available after setup.</p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {(Object.keys(businessTypeInfo) as BusinessType[]).map((type) => {
           const { title, icon: Icon, description } = businessTypeInfo[type];

@@ -41,11 +41,17 @@ const Index = () => {
     },
   });
 
+  // Only show business type selection if there are no payments at all
+  const shouldShowBusinessTypeSelect = !payments;
+  
+  // Only show subscription alert if there's payment data but subscription is not active
+  const shouldShowSubscriptionAlert = payments && payments.subscription_status !== 'active';
+
   return (
     <MainLayout>
-      {!payments && <BusinessTypeSelect />}
+      {shouldShowBusinessTypeSelect && <BusinessTypeSelect />}
       <div className="space-y-6">
-        <SubscriptionAlert />
+        {shouldShowSubscriptionAlert && <SubscriptionAlert />}
         <DashboardHeader />
         
         <div className="space-y-6">
