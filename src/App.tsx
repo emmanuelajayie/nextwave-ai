@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Data from "./pages/Data";
@@ -13,25 +14,50 @@ import Dashboards from "./pages/Dashboards";
 import Settings from "./pages/Settings";
 import PaymentCallback from "./pages/payment/Callback";
 import { FeedbackDialog } from "./components/feedback/FeedbackDialog";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { data: session, isLoading } = useQuery({
-    queryKey: ["session"],
-    queryFn: async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      return session;
-    },
-  });
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  if (isLoading) {
+  useEffect(() => {
+    // Set up auth state listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        console.log("Auth state changed in PrivateRoute:", event);
+        setSession(currentSession);
+        setLoading(false);
+      }
+    );
+
+    // Then check for existing session
+    const getInitialSession = async () => {
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Error getting session:", error);
+        }
+        setSession(data.session);
+      } catch (error) {
+        console.error("Session fetch error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getInitialSession();
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (loading) {
     return <div className="min-h-screen flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
     </div>;
   }
 
   if (!session) {
+    console.log("No session found, redirecting to /auth");
     return <Navigate to="/auth" replace />;
   }
 
@@ -42,6 +68,8 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      refetchOnWindowFocus: false,
     },
   },
 });

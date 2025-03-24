@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 interface EmailAuthFormProps {
   isSignUp: boolean;
@@ -17,31 +17,55 @@ export const EmailAuthForm = ({ isSignUp, onSignUpSuccess }: EmailAuthFormProps)
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error("Email and password are required");
+      return;
+    }
+    
     setLoading(true);
 
     try {
+      console.log(`Attempting to ${isSignUp ? 'sign up' : 'sign in'} with email: ${email}`);
+      
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth`
+          }
         });
 
         if (error) throw error;
         
-        onSignUpSuccess(email);
-        toast.success("Please check your email to verify your account");
+        console.log("Sign up response:", data);
+        
+        if (data?.user) {
+          onSignUpSuccess(email);
+          toast.success("Please check your email to verify your account");
+        } else {
+          toast.error("Something went wrong. Please try again.");
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
 
         if (error) throw error;
         
-        toast.success("Successfully signed in!");
+        console.log("Sign in response:", data);
+        
+        if (data?.user) {
+          toast.success("Successfully signed in!");
+        } else {
+          toast.error("Sign in failed. Please check your credentials.");
+        }
       }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error(`${isSignUp ? 'Sign up' : 'Sign in'} error:`, error);
+      toast.error(error.message || "Authentication failed");
     } finally {
       setLoading(false);
     }

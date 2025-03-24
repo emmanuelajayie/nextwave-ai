@@ -1,21 +1,32 @@
 
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 
 export const GoogleAuthButton = () => {
   const handleGoogleAuth = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      console.log("Starting Google authentication...");
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth`
+          redirectTo: `${window.location.origin}/auth`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          }
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Google auth error:", error);
+        throw error;
+      }
+
+      console.log("Google auth response:", data);
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Google auth error details:", error);
+      toast.error(error.message || "Failed to connect to Google");
     }
   };
 
