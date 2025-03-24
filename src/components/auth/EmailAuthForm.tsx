@@ -65,7 +65,15 @@ export const EmailAuthForm = ({ isSignUp, onSignUpSuccess }: EmailAuthFormProps)
       }
     } catch (error: any) {
       console.error(`${isSignUp ? 'Sign up' : 'Sign in'} error:`, error);
-      toast.error(error.message || "Authentication failed");
+      
+      // Provide more helpful error messages
+      if (error.message.includes("Email already registered")) {
+        toast.error("This email is already registered. Please sign in instead.");
+      } else if (error.message.includes("Invalid login credentials")) {
+        toast.error("Invalid email or password. Please try again.");
+      } else {
+        toast.error(error.message || "Authentication failed");
+      }
     } finally {
       setLoading(false);
     }

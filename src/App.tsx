@@ -21,7 +21,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener first
+    // Set up auth state listener first for immediate response to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log("Auth state changed in PrivateRoute:", event);
@@ -33,9 +33,12 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
     // Then check for existing session
     const getInitialSession = async () => {
       try {
+        console.log("Checking for existing session");
         const { data, error } = await supabase.auth.getSession();
         if (error) {
           console.error("Error getting session:", error);
+        } else {
+          console.log("Session data:", data.session ? "Found" : "Not found");
         }
         setSession(data.session);
       } catch (error) {

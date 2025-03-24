@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,7 @@ export const TeamManagement = () => {
   const fetchTeams = async () => {
     setIsLoading(true);
     try {
-      // Fixed query to avoid recursion - fetch teams first
+      // Fetch teams without joining to team_members to avoid recursion
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
         .select("*");
@@ -32,28 +31,8 @@ export const TeamManagement = () => {
         return;
       }
       
-      // If we have teams, get the member counts separately
-      if (teamsData && teamsData.length > 0) {
-        const teamsWithMemberCounts = await Promise.all(
-          teamsData.map(async (team) => {
-            const { count, error: countError } = await supabase
-              .from("team_members")
-              .select("*", { count: 'exact', head: true })
-              .eq("team_id", team.id);
-            
-            if (countError) {
-              console.error("Error fetching team member count:", countError);
-              return { ...team, memberCount: 0 };
-            }
-            
-            return { ...team, memberCount: count || 0 };
-          })
-        );
-        
-        setTeams(teamsWithMemberCounts);
-      } else {
-        setTeams([]);
-      }
+      // Set teams data
+      setTeams(teamsData || []);
     } catch (error: any) {
       console.error("Error in team fetching process:", error);
       ErrorLogger.logError(error, "Failed to load teams data");

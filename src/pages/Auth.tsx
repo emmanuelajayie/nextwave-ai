@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { CompanyDetailsForm } from "@/components/auth/CompanyDetailsForm";
 import { useQuery } from "@tanstack/react-query";
@@ -12,8 +12,9 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  // Improved session handling with error states
+  // Improved session handling with more reliable initialization
   const { data: session, isLoading } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
@@ -35,16 +36,21 @@ const Auth = () => {
     },
   });
 
-  // Add auth state change listener
+  // Add auth state change listener with logging and navigation
   useEffect(() => {
+    console.log("Setting up auth state change listener");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log("Auth state changed:", event, !!currentSession);
+        if (event === 'SIGNED_IN' && currentSession) {
+          console.log("User signed in, redirecting to home");
+          navigate("/");
+        }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   if (isLoading || authLoading) {
     return (
@@ -59,6 +65,7 @@ const Auth = () => {
   }
 
   if (session) {
+    console.log("Session found, redirecting to home page");
     return <Navigate to="/" replace />;
   }
 
@@ -75,7 +82,10 @@ const Auth = () => {
         ) : (
           <CompanyDetailsForm 
             email={email}
-            onSuccess={() => setShowCompanyDetails(false)}
+            onSuccess={() => {
+              setShowCompanyDetails(false);
+              toast.success("Registration complete! Please sign in.");
+            }}
           />
         )}
       </div>
