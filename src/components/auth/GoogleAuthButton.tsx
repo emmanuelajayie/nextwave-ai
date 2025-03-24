@@ -2,6 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { Github } from "lucide-react";
 
 export const GoogleAuthButton = () => {
   const handleGoogleAuth = async () => {
@@ -24,7 +25,6 @@ export const GoogleAuthButton = () => {
       }
 
       console.log("Google auth response:", data);
-      // No need for success toast here as the redirect will happen
     } catch (error: any) {
       console.error("Google auth error details:", error);
       toast.error(error.message || "Failed to connect to Google");

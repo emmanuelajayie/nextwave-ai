@@ -14,29 +14,30 @@ const Auth = () => {
   const [authError, setAuthError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Improved session handling with more reliable initialization
-  const { data: session, isLoading } = useQuery({
-    queryKey: ["session"],
-    queryFn: async () => {
+  // Explicitly check for a session on mount to prevent loading flicker
+  useEffect(() => {
+    const checkSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (error) {
-          console.error("Session error:", error);
+          console.error("Session check error:", error);
           setAuthError(error.message);
-          return null;
+        } else if (session) {
+          console.log("Session found, redirecting to home");
+          navigate("/", { replace: true });
         }
-        return session;
       } catch (error: any) {
-        console.error("Session fetch error:", error);
+        console.error("Session check failed:", error);
         setAuthError(error.message);
-        return null;
       } finally {
         setAuthLoading(false);
       }
-    },
-  });
+    };
+    
+    checkSession();
+  }, [navigate]);
 
-  // Add auth state change listener with logging and navigation
+  // Add auth state change listener
   useEffect(() => {
     console.log("Setting up auth state change listener");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -44,7 +45,7 @@ const Auth = () => {
         console.log("Auth state changed:", event, !!currentSession);
         if (event === 'SIGNED_IN' && currentSession) {
           console.log("User signed in, redirecting to home");
-          navigate("/");
+          navigate("/", { replace: true });
         }
       }
     );
@@ -52,7 +53,7 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  if (isLoading || authLoading) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
@@ -62,11 +63,6 @@ const Auth = () => {
 
   if (authError) {
     toast.error("Authentication error: " + authError);
-  }
-
-  if (session) {
-    console.log("Session found, redirecting to home page");
-    return <Navigate to="/" replace />;
   }
 
   return (
