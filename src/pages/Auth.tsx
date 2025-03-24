@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { AuthForm } from "@/components/auth/AuthForm";
 import { CompanyDetailsForm } from "@/components/auth/CompanyDetailsForm";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 

@@ -21,7 +21,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener first for immediate response to auth changes
+    // First set up auth state listener for immediate response to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         console.log("Auth state changed in PrivateRoute:", event);
@@ -134,6 +134,7 @@ const App = () => (
             }
           />
           <Route path="/payment/callback" element={<PaymentCallback />} />
+          <Route path="*" element={<Navigate to="/auth" />} />
         </Routes>
         <FeedbackDialog />
       </BrowserRouter>
