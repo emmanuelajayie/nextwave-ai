@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -17,8 +18,11 @@ import {
   Eraser,
   FileSpreadsheet,
   Home,
+  LogOut,
   Settings as SettingsIcon,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 const menuItems = [
   { title: "Dashboard", icon: Home, url: "/" },
@@ -35,6 +39,18 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [isOpen] = useState(true);
 
   console.log("Current location:", location.pathname);
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      toast.success("Logged out successfully");
+      navigate("/auth");
+    } catch (error: any) {
+      console.error("Error logging out:", error);
+      toast.error(error.message || "Failed to log out");
+    }
+  };
 
   return (
     <SidebarProvider>
@@ -62,6 +78,19 @@ const MainLayout = ({ children }: { children: React.ReactNode }) => {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
+
+                  {/* Logout button */}
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className="w-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/20"
+                      onClick={handleLogout}
+                    >
+                      <div className="flex items-center gap-3">
+                        <LogOut className="w-5 h-5" />
+                        <span>Logout</span>
+                      </div>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
