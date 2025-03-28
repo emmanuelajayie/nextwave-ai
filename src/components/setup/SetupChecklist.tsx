@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/lib/supabase";
+import { UserSetupProgress } from "@/integrations/supabase/types-extensions";
 
 interface Step {
   id: string;
@@ -81,7 +82,7 @@ export const SetupChecklist = () => {
             // If we have database data, use it (it's the source of truth)
             const dbSteps = steps.map(step => ({
               ...step,
-              completed: data.completed_steps.includes(step.id)
+              completed: (data as UserSetupProgress).completed_steps.includes(step.id)
             }));
             setSteps(dbSteps);
             localStorage.setItem('setupSteps', JSON.stringify(dbSteps));

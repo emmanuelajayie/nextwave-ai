@@ -1,7 +1,4 @@
 
-// This file extends the generated Supabase types with additional types used in the application
-// Note: Do not modify the generated types.ts file directly
-
 import { Database } from './types';
 
 // Extend the base types with additional types or interfaces
@@ -29,4 +26,12 @@ export interface CRMContactRecord {
   phone?: string;
   created?: string;
   source: string;
+}
+
+// User setup progress type
+export interface UserSetupProgress {
+  id: string;
+  user_id: string;
+  completed_steps: string[];
+  updated_at: string;
 }

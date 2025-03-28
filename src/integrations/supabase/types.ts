@@ -696,6 +696,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_setup_progress: {
+        Row: {
+          completed_steps: string[] | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_steps?: string[] | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_steps?: string[] | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       workflows: {
         Row: {
           config: Json
