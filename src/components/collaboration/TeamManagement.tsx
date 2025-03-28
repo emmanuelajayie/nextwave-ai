@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Users, UserPlus } from "lucide-react";
+import { Users, UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import ErrorLogger from "@/utils/errorLogger";
@@ -11,6 +12,7 @@ export const TeamManagement = () => {
   const [teams, setTeams] = useState<any[]>([]);
   const [newTeamName, setNewTeamName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
 
   useEffect(() => {
     fetchTeams();
@@ -49,6 +51,7 @@ export const TeamManagement = () => {
     }
 
     try {
+      setIsCreatingTeam(true);
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         toast.error("You must be logged in to create a team");
@@ -59,13 +62,14 @@ export const TeamManagement = () => {
         .from("teams")
         .insert([{ 
           name: newTeamName,
-          created_by: userData.user.id
+          owner_id: userData.user.id  // Use owner_id instead of created_by
         }])
         .select()
         .single();
 
       if (error) {
         console.error("Error creating team:", error);
+        ErrorLogger.logError(new Error(error.message), "Failed to create team");
         toast.error("Failed to create team");
         return;
       }
@@ -74,8 +78,11 @@ export const TeamManagement = () => {
       setNewTeamName("");
       fetchTeams();
     } catch (error: any) {
-      console.error("Error:", error);
+      console.error("Error creating team:", error);
+      ErrorLogger.logError(error, "Failed to process team creation");
       toast.error("Failed to process team creation");
+    } finally {
+      setIsCreatingTeam(false);
     }
   };
 
@@ -98,9 +105,21 @@ export const TeamManagement = () => {
             value={newTeamName}
             onChange={(e) => setNewTeamName(e.target.value)}
           />
-          <Button onClick={createTeam}>
-            <UserPlus className="mr-2 h-4 w-4" />
-            Create Team
+          <Button 
+            onClick={createTeam}
+            disabled={isCreatingTeam || !newTeamName.trim()}
+          >
+            {isCreatingTeam ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              <>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Create Team
+              </>
+            )}
           </Button>
         </div>
 

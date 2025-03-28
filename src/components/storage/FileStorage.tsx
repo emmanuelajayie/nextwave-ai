@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
 import { Folder, File, Download, Trash2, FolderPlus, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ErrorLogger from "@/utils/errorLogger";
 
 interface FileItem {
   id: string;
@@ -32,6 +34,7 @@ export const FileStorage = () => {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [isFolderProcessing, setIsFolderProcessing] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -94,8 +97,9 @@ export const FileStorage = () => {
       console.log('File uploaded successfully:', file.name);
       toast.success("File uploaded successfully");
       loadFiles();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading file:", error);
+      ErrorLogger.logError(new Error(error.message), "Failed to upload file");
       toast.error("Failed to upload file. Please try again.");
     } finally {
       setIsUploading(false);
@@ -109,24 +113,34 @@ export const FileStorage = () => {
     }
 
     try {
+      setIsFolderProcessing(true);
       console.log('Creating folder:', newFolderName);
-      const { error } = await supabase.from("file_storage").insert({
+      
+      const { data, error } = await supabase.from("file_storage").insert({
         file_name: newFolderName,
         file_path: `${currentPath}${newFolderName}/`,
         folder_path: currentPath,
         is_folder: true,
-      });
+      }).select();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error creating folder:", error);
+        ErrorLogger.logError(new Error(error.message), "Failed to create folder");
+        toast.error("Failed to create folder. Please try again.");
+        return;
+      }
 
       console.log('Folder created successfully:', newFolderName);
       toast.success("Folder created successfully");
       setNewFolderName("");
       setIsCreatingFolder(false);
       loadFiles();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating folder:", error);
-      toast.error("Failed to create folder");
+      ErrorLogger.logError(new Error(error.message), "Failed to create folder");
+      toast.error("Failed to create folder. Please try again.");
+    } finally {
+      setIsFolderProcessing(false);
     }
   };
 
@@ -154,8 +168,9 @@ export const FileStorage = () => {
         `${item.is_folder ? "Folder" : "File"} deleted successfully`
       );
       loadFiles();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting item:", error);
+      ErrorLogger.logError(new Error(error.message), "Failed to delete item");
       toast.error("Failed to delete item");
     }
   };
@@ -171,8 +186,9 @@ export const FileStorage = () => {
 
       console.log('Download URL generated successfully');
       window.open(data.signedUrl, "_blank");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error downloading file:", error);
+      ErrorLogger.logError(new Error(error.message), "Failed to download file");
       toast.error("Failed to download file");
     }
   };
@@ -235,7 +251,19 @@ export const FileStorage = () => {
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
           />
-          <Button onClick={handleCreateFolder}>Create</Button>
+          <Button 
+            onClick={handleCreateFolder} 
+            disabled={isFolderProcessing || !newFolderName.trim()}
+          >
+            {isFolderProcessing ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : (
+              "Create"
+            )}
+          </Button>
         </div>
       )}
 
