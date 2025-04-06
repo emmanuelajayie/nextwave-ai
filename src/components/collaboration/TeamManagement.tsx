@@ -1,12 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Users, UserPlus, Loader2 } from "lucide-react";
+import { Users } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import ErrorLogger from "@/utils/errorLogger";
+import { CreateTeamForm } from "./CreateTeamForm";
+import { TeamList } from "./TeamList";
 
 // Define TypeScript interfaces for our data
 interface Team {
@@ -20,9 +20,7 @@ interface Team {
 
 export const TeamManagement = () => {
   const [teams, setTeams] = useState<Team[]>([]);
-  const [newTeamName, setNewTeamName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
 
   useEffect(() => {
     fetchTeams();
@@ -89,91 +87,6 @@ export const TeamManagement = () => {
     }
   };
 
-  const createTeam = async () => {
-    if (!newTeamName.trim()) {
-      toast.error("Please enter a team name");
-      return;
-    }
-
-    try {
-      setIsCreatingTeam(true);
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !userData.user) {
-        console.error("Auth error:", userError);
-        toast.error("You must be logged in to create a team");
-        return;
-      }
-
-      // Check for duplicate team name
-      const { data: existingTeam, error: checkError } = await supabase
-        .from("teams")
-        .select("id")
-        .eq("name", newTeamName.trim())
-        .maybeSingle();
-
-      if (checkError) {
-        console.error("Error checking team name:", checkError);
-      }
-
-      if (existingTeam) {
-        toast.error("A team with this name already exists");
-        return;
-      }
-
-      // Create the team with owner_id
-      const { data, error } = await supabase
-        .from("teams")
-        .insert([{ 
-          name: newTeamName.trim(),
-          owner_id: userData.user.id
-        }])
-        .select()
-        .single();
-
-      if (error) {
-        console.error("Error creating team:", error);
-        ErrorLogger.logError(new Error(error.message), "Failed to create team");
-        
-        // Provide more specific error messages based on error codes
-        if (error.code === "23505") { // Unique constraint violation
-          toast.error("A team with this name already exists");
-        } else if (error.code === "23502") { // Not null violation
-          toast.error("Missing required fields");
-        } else {
-          toast.error(`Failed to create team: ${error.message}`);
-        }
-        return;
-      }
-
-      // Also add the creator as a team member with 'admin' role
-      if (data) {
-        const { error: memberError } = await supabase
-          .from("team_members")
-          .insert([{
-            team_id: data.id,
-            user_id: userData.user.id,
-            role: 'admin'
-          }]);
-
-        if (memberError) {
-          console.error("Error adding team member:", memberError);
-          // Don't return here, we still created the team successfully
-        }
-      }
-
-      toast.success("Team created successfully");
-      setNewTeamName("");
-      fetchTeams();
-    } catch (error: any) {
-      console.error("Error creating team:", error);
-      ErrorLogger.logError(error, "Failed to process team creation");
-      toast.error("Failed to process team creation");
-    } finally {
-      setIsCreatingTeam(false);
-    }
-  };
-
   const handleManageTeam = (teamId: string, teamName: string) => {
     // For now just show a toast, this will be implemented in the future
     toast.info(`Managing team: ${teamName}`);
@@ -193,63 +106,12 @@ export const TeamManagement = () => {
       </div>
 
       <div className="space-y-4">
-        <div className="flex gap-2">
-          <Input
-            placeholder="Enter team name"
-            value={newTeamName}
-            onChange={(e) => setNewTeamName(e.target.value)}
-            className="flex-1"
-          />
-          <Button 
-            onClick={createTeam}
-            disabled={isCreatingTeam || !newTeamName.trim()}
-          >
-            {isCreatingTeam ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              <>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Create Team
-              </>
-            )}
-          </Button>
-        </div>
-
-        {isLoading ? (
-          <div className="py-4 flex justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {teams.length === 0 ? (
-              <p className="text-center text-muted-foreground py-4">No teams yet. Create your first team above.</p>
-            ) : (
-              teams.map((team) => (
-                <div
-                  key={team.id}
-                  className="flex justify-between items-center p-3 border rounded-lg"
-                >
-                  <div>
-                    <h3 className="font-medium">{team.name}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {team.memberCount || 0} members
-                    </p>
-                  </div>
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => handleManageTeam(team.id, team.name)}
-                  >
-                    Manage
-                  </Button>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+        <CreateTeamForm onTeamCreated={fetchTeams} />
+        <TeamList 
+          teams={teams}
+          isLoading={isLoading}
+          onManageTeam={handleManageTeam}
+        />
       </div>
     </Card>
   );
