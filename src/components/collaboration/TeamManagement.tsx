@@ -64,8 +64,8 @@ export const TeamManagement = () => {
           
         if (!membersError && memberCounts) {
           // Create a map of team_id -> member count
-          const countMap = memberCounts.reduce((acc: Record<string, number>, item: TeamMemberCount) => {
-            acc[item.team_id] = typeof item.count === 'number' ? item.count : parseInt(item.count as string);
+          const countMap = memberCounts.reduce((acc: Record<string, number>, item: any) => {
+            acc[item.team_id] = typeof item.count === 'number' ? item.count : parseInt(String(item.count));
             return acc;
           }, {});
           
