@@ -21,7 +21,7 @@ export const TeamManagement = () => {
   const fetchTeams = async () => {
     setIsLoading(true);
     try {
-      // Fetch teams without joining to team_members to avoid recursion
+      // First, fetch teams data
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
         .select("*");
@@ -32,9 +32,36 @@ export const TeamManagement = () => {
         toast.error("Failed to load teams");
         return;
       }
+
+      if (!teamsData) {
+        setTeams([]);
+        return;
+      }
       
-      // Set teams data
-      setTeams(teamsData || []);
+      // Get team member counts in a separate query
+      const teamIds = teamsData.map(team => team.id);
+      if (teamIds.length > 0) {
+        const { data: memberCounts, error: membersError } = await supabase
+          .from("team_members")
+          .select("team_id, count")
+          .in("team_id", teamIds)
+          .group("team_id");
+          
+        if (!membersError && memberCounts) {
+          // Create a map of team_id -> member count
+          const countMap = memberCounts.reduce((acc, item) => {
+            acc[item.team_id] = parseInt(item.count);
+            return acc;
+          }, {});
+          
+          // Add the counts to the teams data
+          teamsData.forEach(team => {
+            team.memberCount = countMap[team.id] || 0;
+          });
+        }
+      }
+      
+      setTeams(teamsData);
     } catch (error: any) {
       console.error("Error in team fetching process:", error);
       ErrorLogger.logError(error, "Failed to load teams data");
@@ -52,17 +79,36 @@ export const TeamManagement = () => {
 
     try {
       setIsCreatingTeam(true);
-      const { data: userData } = await supabase.auth.getUser();
-      if (!userData.user) {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !userData.user) {
+        console.error("Auth error:", userError);
         toast.error("You must be logged in to create a team");
         return;
       }
 
+      // Check for duplicate team name
+      const { data: existingTeam, error: checkError } = await supabase
+        .from("teams")
+        .select("id")
+        .eq("name", newTeamName.trim())
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking team name:", checkError);
+      }
+
+      if (existingTeam) {
+        toast.error("A team with this name already exists");
+        return;
+      }
+
+      // Create the team with owner_id
       const { data, error } = await supabase
         .from("teams")
         .insert([{ 
-          name: newTeamName,
-          owner_id: userData.user.id  // Use owner_id instead of created_by
+          name: newTeamName.trim(),
+          owner_id: userData.user.id
         }])
         .select()
         .single();
@@ -70,8 +116,32 @@ export const TeamManagement = () => {
       if (error) {
         console.error("Error creating team:", error);
         ErrorLogger.logError(new Error(error.message), "Failed to create team");
-        toast.error("Failed to create team");
+        
+        // Provide more specific error messages based on error codes
+        if (error.code === "23505") { // Unique constraint violation
+          toast.error("A team with this name already exists");
+        } else if (error.code === "23502") { // Not null violation
+          toast.error("Missing required fields");
+        } else {
+          toast.error(`Failed to create team: ${error.message}`);
+        }
         return;
+      }
+
+      // Also add the creator as a team member with 'admin' role
+      if (data) {
+        const { error: memberError } = await supabase
+          .from("team_members")
+          .insert([{
+            team_id: data.id,
+            user_id: userData.user.id,
+            role: 'admin'
+          }]);
+
+        if (memberError) {
+          console.error("Error adding team member:", memberError);
+          // Don't return here, we still created the team successfully
+        }
       }
 
       toast.success("Team created successfully");
@@ -84,6 +154,12 @@ export const TeamManagement = () => {
     } finally {
       setIsCreatingTeam(false);
     }
+  };
+
+  const handleManageTeam = (teamId: string, teamName: string) => {
+    // For now just show a toast, this will be implemented in the future
+    toast.info(`Managing team: ${teamName}`);
+    console.log("Opening management for team:", teamId);
   };
 
   return (
@@ -104,6 +180,7 @@ export const TeamManagement = () => {
             placeholder="Enter team name"
             value={newTeamName}
             onChange={(e) => setNewTeamName(e.target.value)}
+            className="flex-1"
           />
           <Button 
             onClick={createTeam}
@@ -125,7 +202,7 @@ export const TeamManagement = () => {
 
         {isLoading ? (
           <div className="py-4 flex justify-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : (
           <div className="space-y-2">
@@ -143,7 +220,11 @@ export const TeamManagement = () => {
                       {team.memberCount || 0} members
                     </p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleManageTeam(team.id, team.name)}
+                  >
                     Manage
                   </Button>
                 </div>
