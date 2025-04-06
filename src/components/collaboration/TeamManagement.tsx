@@ -18,11 +18,6 @@ interface Team {
   memberCount?: number;
 }
 
-interface TeamMemberCount {
-  team_id: string;
-  count: string | number;
-}
-
 export const TeamManagement = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [newTeamName, setNewTeamName] = useState("");
@@ -59,15 +54,16 @@ export const TeamManagement = () => {
         // Use proper SQL aggregation instead of .group() method
         const { data: memberCounts, error: membersError } = await supabase
           .from("team_members")
-          .select("team_id, count(*)")
-          .in("team_id", teamIds);
+          .select("team_id, count(*)");
           
         if (!membersError && memberCounts) {
           // Create a map of team_id -> member count
-          const countMap = memberCounts.reduce((acc: Record<string, number>, item: any) => {
-            acc[item.team_id] = typeof item.count === 'number' ? item.count : parseInt(String(item.count));
-            return acc;
-          }, {});
+          const countMap: Record<string, number> = {};
+          
+          memberCounts.forEach((item: any) => {
+            const count = item.count !== null ? parseInt(String(item.count)) : 0;
+            countMap[item.team_id] = count;
+          });
           
           // Add the counts to the teams data
           const teamsWithCounts: Team[] = teamsData.map(team => ({
