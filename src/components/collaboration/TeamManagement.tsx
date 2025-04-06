@@ -8,8 +8,23 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import ErrorLogger from "@/utils/errorLogger";
 
+// Define TypeScript interfaces for our data
+interface Team {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+  owner_id?: string;
+  memberCount?: number;
+}
+
+interface TeamMemberCount {
+  team_id: string;
+  count: string | number;
+}
+
 export const TeamManagement = () => {
-  const [teams, setTeams] = useState<any[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [newTeamName, setNewTeamName] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
@@ -41,27 +56,34 @@ export const TeamManagement = () => {
       // Get team member counts in a separate query
       const teamIds = teamsData.map(team => team.id);
       if (teamIds.length > 0) {
+        // Use proper SQL aggregation instead of .group() method
         const { data: memberCounts, error: membersError } = await supabase
           .from("team_members")
-          .select("team_id, count")
-          .in("team_id", teamIds)
-          .group("team_id");
+          .select("team_id, count(*)")
+          .in("team_id", teamIds);
           
         if (!membersError && memberCounts) {
           // Create a map of team_id -> member count
-          const countMap = memberCounts.reduce((acc, item) => {
-            acc[item.team_id] = parseInt(item.count);
+          const countMap = memberCounts.reduce((acc: Record<string, number>, item: TeamMemberCount) => {
+            acc[item.team_id] = typeof item.count === 'number' ? item.count : parseInt(item.count as string);
             return acc;
           }, {});
           
           // Add the counts to the teams data
-          teamsData.forEach(team => {
-            team.memberCount = countMap[team.id] || 0;
-          });
+          const teamsWithCounts: Team[] = teamsData.map(team => ({
+            ...team,
+            memberCount: countMap[team.id] || 0
+          }));
+          
+          setTeams(teamsWithCounts);
+        } else {
+          // If there was an error getting counts, just use the teams data without counts
+          setTeams(teamsData);
         }
+      } else {
+        setTeams(teamsData);
       }
       
-      setTeams(teamsData);
     } catch (error: any) {
       console.error("Error in team fetching process:", error);
       ErrorLogger.logError(error, "Failed to load teams data");
