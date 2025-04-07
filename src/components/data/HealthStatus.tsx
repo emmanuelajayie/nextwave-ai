@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { ShieldCheck, AlertCircle, RefreshCw } from "lucide-react";
+import { ShieldCheck, AlertCircle, RefreshCw, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -11,10 +11,11 @@ export const HealthStatus = ({ showInCard = true }) => {
   const [status, setStatus] = useState<'checking' | 'healthy' | 'issues'>('checking');
   const [errors, setErrors] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [autoRetryCount, setAutoRetryCount] = useState(0);
 
-  const checkSystemHealth = async () => {
+  const checkSystemHealth = async (silent = false) => {
     setStatus('checking');
-    setErrors([]);
+    if (!silent) setErrors([]);
     setIsRefreshing(true);
     
     try {
@@ -22,8 +23,8 @@ export const HealthStatus = ({ showInCard = true }) => {
       
       // Check database connection
       try {
-        const { error: dbError } = await supabase
-          .from('file_storage')
+        const { data, error: dbError } = await supabase
+          .from('workflows')
           .select('count')
           .limit(1)
           .single();
@@ -35,23 +36,39 @@ export const HealthStatus = ({ showInCard = true }) => {
         healthIssues.push(`Database connection error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
       
+      // Check authentication service
+      try {
+        const { data, error: authError } = await supabase.auth.getSession();
+        if (authError) {
+          healthIssues.push(`Auth service error: ${authError.message}`);
+        }
+      } catch (error) {
+        healthIssues.push(`Auth service error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      
       // Check storage bucket
       try {
-        const { error: storageError } = await supabase.storage.getBucket('user_files');
+        const { data: bucketList, error: storageListError } = await supabase.storage.listBuckets();
         
-        if (storageError) {
-          // Call the create-storage-bucket function to setup bucket if needed
-          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-storage-bucket`, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-              'Content-Type': 'application/json'
-            }
-          });
+        if (storageListError) {
+          healthIssues.push(`Storage error: ${storageListError.message}`);
           
-          if (!response.ok) {
-            const errorData = await response.json();
-            healthIssues.push(`Storage error: ${errorData.error || 'Unable to create storage bucket'}`);
+          // Try to create bucket if needed
+          try {
+            const { data: createData, error: createError } = await supabase.storage.createBucket('user_files', {
+              public: false,
+              fileSizeLimit: 52428800 // 50MB in bytes
+            });
+            
+            if (createError) {
+              healthIssues.push(`Storage bucket creation error: ${createError.message}`);
+            } else {
+              // Remove the original storage error since we fixed it
+              healthIssues.pop();
+              healthIssues.push('Storage bucket created successfully');
+            }
+          } catch (createError) {
+            healthIssues.push(`Storage bucket creation exception: ${createError instanceof Error ? createError.message : 'Unknown error'}`);
           }
         }
       } catch (error) {
@@ -63,22 +80,37 @@ export const HealthStatus = ({ showInCard = true }) => {
       setStatus(healthIssues.length > 0 ? 'issues' : 'healthy');
       
       if (healthIssues.length === 0) {
-        toast.success("All systems operational");
+        if (!silent) toast.success("All systems operational");
       } else {
-        toast.error(`System health check found ${healthIssues.length} issues`);
+        if (!silent) toast.error(`System health check found ${healthIssues.length} issues`);
+        
+        // Auto-retry if we have issues and haven't exceeded retry limit
+        if (autoRetryCount < 2) {
+          setAutoRetryCount(prev => prev + 1);
+          setTimeout(() => {
+            checkSystemHealth(true);
+          }, 3000); // Wait 3 seconds before retry
+        }
       }
     } catch (error) {
       console.error("Error checking system health:", error);
       setErrors([`Failed to complete health check: ${error instanceof Error ? error.message : 'Unknown error'}`]);
       setStatus('issues');
-      toast.error("Failed to complete health check");
+      if (!silent) toast.error("Failed to complete health check");
     } finally {
       setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
-    checkSystemHealth();
+    checkSystemHealth(true);
+    
+    // Set up periodic health checks
+    const intervalId = setInterval(() => {
+      checkSystemHealth(true);
+    }, 300000); // Check every 5 minutes
+    
+    return () => clearInterval(intervalId);
   }, []);
 
   const healthContent = (
@@ -88,7 +120,7 @@ export const HealthStatus = ({ showInCard = true }) => {
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={checkSystemHealth}
+          onClick={() => checkSystemHealth()}
           disabled={isRefreshing}
         >
           <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -105,10 +137,12 @@ export const HealthStatus = ({ showInCard = true }) => {
       
       {status === 'healthy' && (
         <Alert className="bg-green-50 border-green-200">
-          <ShieldCheck className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-700">
-            All systems are operational
-          </AlertDescription>
+          <div className="flex items-center">
+            <CheckCircle className="h-4 w-4 text-green-600 mr-2" />
+            <AlertDescription className="text-green-700">
+              All systems are operational
+            </AlertDescription>
+          </div>
         </Alert>
       )}
       
@@ -127,6 +161,19 @@ export const HealthStatus = ({ showInCard = true }) => {
                 {error}
               </div>
             ))}
+          </div>
+          
+          <div className="mt-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full"
+              onClick={() => checkSystemHealth()}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Try Again
+            </Button>
           </div>
         </div>
       )}

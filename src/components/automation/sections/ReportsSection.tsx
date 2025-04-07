@@ -1,7 +1,7 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Send } from "lucide-react";
+import { Send, InfoIcon } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -9,6 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { toast } from "sonner";
 
 interface ReportsSectionProps {
   schedule: string;
@@ -23,19 +25,36 @@ export const ReportsSection = ({
   onScheduleChange,
   onTimeChange,
 }: ReportsSectionProps) => {
+  const handleScheduleChange = (value: string) => {
+    onScheduleChange(value);
+    toast.success(`Reports schedule set to ${value}`);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-4">
         <Send className="h-5 w-5 text-primary" />
-        <div>
-          <Label>Report Delivery</Label>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <Label>Report Delivery</Label>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <InfoIcon className="h-4 w-4 text-muted-foreground cursor-help" />
+              </HoverCardTrigger>
+              <HoverCardContent className="w-80">
+                <p className="text-sm">
+                  Schedule automated report generation and delivery to keep stakeholders informed about your business performance.
+                </p>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
           <p className="text-sm text-muted-foreground">
             Schedule automated report sending
           </p>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Select value={schedule} onValueChange={onScheduleChange}>
+        <Select value={schedule} onValueChange={handleScheduleChange}>
           <SelectTrigger>
             <SelectValue placeholder="Select frequency" />
           </SelectTrigger>
@@ -48,7 +67,10 @@ export const ReportsSection = ({
         <Input 
           type="time"
           value={time}
-          onChange={(e) => onTimeChange(e.target.value)}
+          onChange={(e) => {
+            onTimeChange(e.target.value);
+            toast.success(`Report delivery time set to ${e.target.value}`);
+          }}
         />
       </div>
     </div>

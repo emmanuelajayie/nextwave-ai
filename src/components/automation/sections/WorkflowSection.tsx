@@ -2,7 +2,7 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Workflow } from "lucide-react";
+import { Workflow, CheckCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { InfoIcon } from "lucide-react";
+import { toast } from "sonner";
 
 interface WorkflowSectionProps {
   schedule: string;
@@ -30,6 +31,16 @@ export const WorkflowSection = ({
   onTimeChange,
   onDaySelection,
 }: WorkflowSectionProps) => {
+  const handleTimeChange = (value: string) => {
+    onTimeChange(value);
+    toast.success(`Workflow time updated to ${value}`);
+  };
+
+  const handleScheduleChange = (value: string) => {
+    onScheduleChange(value);
+    toast.success(`Schedule frequency set to ${value}`);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center space-x-4">
@@ -46,6 +57,11 @@ export const WorkflowSection = ({
                   Schedule your complete workflow execution including data collection, 
                   cleaning, analysis, and reporting at your preferred frequency.
                 </p>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  <p>• Daily: Runs every day at the specified time</p>
+                  <p>• Weekly: Runs every Monday at the specified time</p>
+                  <p>• Custom: Runs on selected days at the specified time</p>
+                </div>
               </HoverCardContent>
             </HoverCard>
           </div>
@@ -55,7 +71,7 @@ export const WorkflowSection = ({
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Select value={schedule} onValueChange={onScheduleChange}>
+        <Select value={schedule} onValueChange={handleScheduleChange}>
           <SelectTrigger>
             <SelectValue placeholder="Select frequency" />
           </SelectTrigger>
@@ -68,23 +84,31 @@ export const WorkflowSection = ({
         <Input 
           type="time"
           value={time}
-          onChange={(e) => onTimeChange(e.target.value)}
+          onChange={(e) => handleTimeChange(e.target.value)}
         />
       </div>
       
       {schedule === 'custom' && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-            <Button
-              key={day}
-              variant={days.includes(day) ? "default" : "outline"}
-              size="sm"
-              onClick={() => onDaySelection(day)}
-              title={`Select ${day}`}
-            >
-              {day.slice(0, 3)}
-            </Button>
-          ))}
+        <div className="space-y-2">
+          <Label className="text-sm">Select days:</Label>
+          <div className="flex flex-wrap gap-2">
+            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+              <Button
+                key={day}
+                variant={days.includes(day) ? "default" : "outline"}
+                size="sm"
+                onClick={() => onDaySelection(day)}
+                className="flex items-center gap-1"
+                title={`Select ${day}`}
+              >
+                {days.includes(day) && <CheckCircle className="h-3 w-3" />}
+                {day.slice(0, 3)}
+              </Button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Tasks will run on selected days at the specified time
+          </p>
         </div>
       )}
     </div>

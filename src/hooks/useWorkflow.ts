@@ -33,12 +33,20 @@ export type WorkflowConfig = {
 export const useWorkflow = () => {
   const [lastError, setLastError] = useState<Error | null>(null);
 
-  // Fetch workflows
+  // Fetch workflows with improved error handling
   const { data: workflows, isLoading, refetch, error } = useQuery({
     queryKey: ['workflows'],
     queryFn: async () => {
       console.log('Fetching workflows...');
       try {
+        // First check if user is authenticated
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          console.log('No active session found, returning empty workflows array');
+          return [];
+        }
+        
         const { data, error } = await supabase
           .from('workflows')
           .select('*')
@@ -48,10 +56,12 @@ export const useWorkflow = () => {
         if (error) {
           console.error('Supabase error when fetching workflows:', error);
           setLastError(new Error(error.message));
-          throw error;
+          // Return empty array instead of throwing to prevent UI breaks
+          return [];
         }
 
         // Ensure proper typing of the config field
+        console.log('Workflows fetched successfully:', data?.length || 0);
         return data?.map(workflow => ({
           ...workflow,
           config: typeof workflow.config === 'string' 
@@ -61,7 +71,8 @@ export const useWorkflow = () => {
       } catch (error) {
         console.error('Error fetching workflows:', error);
         setLastError(error instanceof Error ? error : new Error('Failed to load workflows'));
-        throw error;
+        // Return empty array instead of throwing to prevent UI breaks
+        return [];
       }
     },
     retry: (failureCount, error) => {
@@ -71,16 +82,18 @@ export const useWorkflow = () => {
         return false;
       }
       return failureCount < 2;
-    }
+    },
+    // Add some caching to prevent excessive requests
+    staleTime: 60000, // 1 minute
   });
 
-  // Update workflow configuration
+  // Update workflow configuration with improved error handling
   const { mutate: updateWorkflow, isPending } = useMutation({
     mutationFn: async (config: WorkflowConfig) => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (!user) {
+        if (!session) {
           throw new Error('User not authenticated');
         }
 
@@ -109,7 +122,7 @@ export const useWorkflow = () => {
               name: 'Scheduled Tasks',
               config,
               status: 'active',
-              created_by: user.id
+              created_by: session.user.id
             })
             .select();
 
