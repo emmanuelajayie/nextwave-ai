@@ -1,3 +1,4 @@
+
 /**
  * Banking Data Handler
  * Specialized handlers for banking industry data with security measures
@@ -98,7 +99,7 @@ export function maskSensitiveBankingData<T extends Record<string, any>>(
     const maskedItem = { ...item };
     
     for (const field of fieldsToMask) {
-      if (maskedItem[field] && typeof maskedItem[field] === 'string') {
+      if (field in maskedItem && typeof maskedItem[field] === 'string') {
         const value = maskedItem[field] as string;
         
         // Keep first and last characters, mask the rest

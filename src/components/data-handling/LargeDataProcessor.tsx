@@ -4,9 +4,18 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { processBankingTransactions } from "@/lib/data-handling/industry/bankingDataHandler";
-import { processProductCatalog } from "@/lib/data-handling/industry/ecommerceDataHandler";
-import { processMedicalRecords } from "@/lib/data-handling/industry/healthcareDataHandler";
+import { 
+  processBankingTransactions, 
+  BankingTransactionData 
+} from "@/lib/data-handling/industry/bankingDataHandler";
+import { 
+  processProductCatalog, 
+  ProductData 
+} from "@/lib/data-handling/industry/ecommerceDataHandler";
+import { 
+  processMedicalRecords, 
+  MedicalRecordData 
+} from "@/lib/data-handling/industry/healthcareDataHandler";
 import { AlertCircle, CheckCircle2, FileSpreadsheet, BarChart3, Loader2 } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
@@ -36,18 +45,20 @@ export const LargeDataProcessor = () => {
     console.log(`Generating ${count} ${industry} records for demo`);
     
     switch (industry) {
-      case "banking":
-        return Array.from({ length: count }, (_, i) => ({
+      case "banking": {
+        const bankingData: BankingTransactionData[] = Array.from({ length: count }, (_, i) => ({
           id: `tx-${i}`,
           timestamp: new Date().toISOString(),
           amount: Math.random() * 1000,
           accountId: `acc-${Math.floor(Math.random() * 1000)}`,
-          type: ["deposit", "withdrawal", "transfer"][Math.floor(Math.random() * 3)] as any,
-          status: ["pending", "completed", "failed"][Math.floor(Math.random() * 3)] as any
+          type: ["deposit", "withdrawal", "transfer"][Math.floor(Math.random() * 3)] as "deposit" | "withdrawal" | "transfer",
+          status: ["pending", "completed", "failed"][Math.floor(Math.random() * 3)] as "pending" | "completed" | "failed"
         }));
+        return bankingData;
+      }
       
-      case "ecommerce":
-        return Array.from({ length: count }, (_, i) => ({
+      case "ecommerce": {
+        const ecommerceData: ProductData[] = Array.from({ length: count }, (_, i) => ({
           id: `prod-${i}`,
           name: `Product ${i}`,
           price: Math.random() * 100 + 10,
@@ -59,9 +70,11 @@ export const LargeDataProcessor = () => {
             inventory: Math.floor(Math.random() * 50)
           })) : undefined
         }));
+        return ecommerceData;
+      }
       
-      case "healthcare":
-        return Array.from({ length: count }, (_, i) => ({
+      case "healthcare": {
+        const healthcareData: MedicalRecordData[] = Array.from({ length: count }, (_, i) => ({
           id: `rec-${i}`,
           patientId: `pat-${Math.floor(Math.random() * 1000)}`,
           date: new Date().toISOString(),
@@ -82,6 +95,8 @@ export const LargeDataProcessor = () => {
           ),
           notes: "Patient follow-up recommended in 3 months."
         }));
+        return healthcareData;
+      }
       
       default:
         return [];
@@ -96,19 +111,19 @@ export const LargeDataProcessor = () => {
     try {
       switch (activeTab) {
         case "banking": {
-          const demoData = generateDemoData("banking");
+          const demoData = generateDemoData("banking") as BankingTransactionData[];
           await processBankingTransactions(demoData, handleProgress);
           setProcessedRecords(demoData.length);
           break;
         }
         case "ecommerce": {
-          const demoData = generateDemoData("ecommerce");
+          const demoData = generateDemoData("ecommerce") as ProductData[];
           await processProductCatalog(demoData, handleProgress);
           setProcessedRecords(demoData.length);
           break;
         }
         case "healthcare": {
-          const demoData = generateDemoData("healthcare");
+          const demoData = generateDemoData("healthcare") as MedicalRecordData[];
           await processMedicalRecords(demoData, handleProgress);
           setProcessedRecords(demoData.length);
           break;

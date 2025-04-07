@@ -113,8 +113,15 @@ export async function* streamData<T>(
  */
 export function monitorMemoryUsage(warningThresholdMB = 1024) {
   if (typeof performance !== 'undefined' && 'memory' in performance) {
-    // @ts-ignore - TypeScript doesn't know about this browser API
-    const memoryInfo = performance.memory;
+    // Define a type for the Chrome's memory API
+    interface MemoryInfo {
+      usedJSHeapSize: number;
+      jsHeapSizeLimit: number;
+      totalJSHeapSize: number;
+    }
+    
+    // Safely cast performance.memory to our defined type
+    const memoryInfo = performance.memory as unknown as MemoryInfo;
     
     if (memoryInfo && memoryInfo.usedJSHeapSize) {
       const usedMB = Math.round(memoryInfo.usedJSHeapSize / (1024 * 1024));
