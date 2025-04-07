@@ -1,4 +1,3 @@
-
 /**
  * Banking Data Handler
  * Specialized handlers for banking industry data with security measures
@@ -90,25 +89,30 @@ export async function processBankingTransactions(
 
 /**
  * Securely mask sensitive banking data (account numbers, etc.)
+ * This version uses proper type checking for generic object types
  */
 export function maskSensitiveBankingData<T extends Record<string, any>>(
   data: T[], 
   fieldsToMask: string[] = ['accountNumber', 'ssn', 'taxId']
 ): T[] {
   return data.map(item => {
-    const maskedItem = { ...item };
+    // Create a shallow copy of the item
+    const maskedItem = { ...item } as T;
     
     for (const field of fieldsToMask) {
-      if (field in maskedItem && typeof maskedItem[field] === 'string') {
-        const value = maskedItem[field] as string;
+      // Check if the field exists and is a string before attempting to mask it
+      if (field in maskedItem && typeof maskedItem[field as keyof T] === 'string') {
+        // Use type assertion to treat the field value as a string
+        const value = maskedItem[field as keyof T] as string;
         
         // Keep first and last characters, mask the rest
         if (value.length > 6) {
-          maskedItem[field] = `${value.substring(0, 2)}${'*'.repeat(value.length - 4)}${value.substring(value.length - 2)}`;
+          // Use type assertion to assign the masked value back
+          (maskedItem as any)[field] = `${value.substring(0, 2)}${'*'.repeat(value.length - 4)}${value.substring(value.length - 2)}`;
         } else if (value.length > 2) {
-          maskedItem[field] = `${value.substring(0, 1)}${'*'.repeat(value.length - 2)}${value.substring(value.length - 1)}`;
+          (maskedItem as any)[field] = `${value.substring(0, 1)}${'*'.repeat(value.length - 2)}${value.substring(value.length - 1)}`;
         } else {
-          maskedItem[field] = '**';
+          (maskedItem as any)[field] = '**';
         }
       }
     }
