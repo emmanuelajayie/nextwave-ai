@@ -1,6 +1,12 @@
 
 project_id = "zpxciicizzdyxqqnixra"
 
+[functions.sync-crm-data]
+verify_jwt = true
+
+[functions.crm-oauth-callback]
+verify_jwt = false
+
 [functions.process-scheduled-tasks]
 verify_jwt = true
 
@@ -11,9 +17,6 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.create-system-logs]
-verify_jwt = true
-
-[functions.crm-oauth-callback]
 verify_jwt = true
 
 [functions.enrich-data]
@@ -31,5 +34,8 @@ verify_jwt = true
 [functions.process-export]
 verify_jwt = true
 
-[functions.sync-crm-data]
+[functions.api-management]
+verify_jwt = true
+
+[functions.system-logger]
 verify_jwt = true

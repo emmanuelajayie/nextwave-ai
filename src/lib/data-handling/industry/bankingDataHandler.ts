@@ -101,18 +101,25 @@ export function maskSensitiveBankingData<T extends Record<string, any>>(
     
     for (const field of fieldsToMask) {
       // Check if the field exists and is a string before attempting to mask it
-      if (field in maskedItem && typeof maskedItem[field as keyof T] === 'string') {
-        // Use type assertion to treat the field value as a string
-        const value = maskedItem[field as keyof T] as string;
+      if (typeof field === 'string' && field in maskedItem) {
+        const fieldValue = maskedItem[field as keyof T];
         
-        // Keep first and last characters, mask the rest
-        if (value.length > 6) {
-          // Use type assertion to assign the masked value back
-          (maskedItem as any)[field] = `${value.substring(0, 2)}${'*'.repeat(value.length - 4)}${value.substring(value.length - 2)}`;
-        } else if (value.length > 2) {
-          (maskedItem as any)[field] = `${value.substring(0, 1)}${'*'.repeat(value.length - 2)}${value.substring(value.length - 1)}`;
-        } else {
-          (maskedItem as any)[field] = '**';
+        // Only process if the field value is a string
+        if (typeof fieldValue === 'string') {
+          const value = fieldValue;
+          let maskedValue: string;
+          
+          // Keep first and last characters, mask the rest
+          if (value.length > 6) {
+            maskedValue = `${value.substring(0, 2)}${'*'.repeat(value.length - 4)}${value.substring(value.length - 2)}`;
+          } else if (value.length > 2) {
+            maskedValue = `${value.substring(0, 1)}${'*'.repeat(value.length - 2)}${value.substring(value.length - 1)}`;
+          } else {
+            maskedValue = '**';
+          }
+          
+          // Use type assertion for assignment
+          maskedItem[field as keyof T] = maskedValue as any;
         }
       }
     }
