@@ -1,1 +1,35 @@
+
 project_id = "zpxciicizzdyxqqnixra"
+
+[functions.process-scheduled-tasks]
+verify_jwt = true
+
+[functions.seed-data]
+verify_jwt = true
+
+[functions.create-storage-bucket]
+verify_jwt = true
+
+[functions.create-system-logs]
+verify_jwt = true
+
+[functions.crm-oauth-callback]
+verify_jwt = true
+
+[functions.enrich-data]
+verify_jwt = true
+
+[functions.payment-initialize]
+verify_jwt = true
+
+[functions.payment-verify]
+verify_jwt = true
+
+[functions.predict]
+verify_jwt = true
+
+[functions.process-export]
+verify_jwt = true
+
+[functions.sync-crm-data]
+verify_jwt = true

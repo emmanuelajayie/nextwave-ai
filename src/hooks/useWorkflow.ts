@@ -47,20 +47,38 @@ export const useWorkflow = () => {
           return [];
         }
         
+        // Try to get workflows directly, bypassing team validation that might cause recursion
         const { data, error } = await supabase
           .from('workflows')
           .select('*')
+          .eq('created_by', session.user.id)
           .order('created_at', { ascending: false })
           .limit(1);
 
+        // If direct query fails, try a more generic approach
         if (error) {
-          console.error('Supabase error when fetching workflows:', error);
-          setLastError(new Error(error.message));
-          // Return empty array instead of throwing to prevent UI breaks
-          return [];
+          console.log('Initial query failed, trying alternative approach');
+          const { data: altData, error: altError } = await supabase
+            .from('workflows')
+            .select('*')
+            .is('team_id', null) // Avoid team-based queries that might cause recursion
+            .order('created_at', { ascending: false })
+            .limit(1);
+            
+          if (altError) {
+            console.error('All attempts to fetch workflows failed:', altError);
+            setLastError(new Error(altError.message));
+            return [];
+          }
+          
+          return altData?.map(workflow => ({
+            ...workflow,
+            config: typeof workflow.config === 'string' 
+              ? JSON.parse(workflow.config) 
+              : workflow.config
+          })) || [];
         }
 
-        // Ensure proper typing of the config field
         console.log('Workflows fetched successfully:', data?.length || 0);
         return data?.map(workflow => ({
           ...workflow,
@@ -71,7 +89,6 @@ export const useWorkflow = () => {
       } catch (error) {
         console.error('Error fetching workflows:', error);
         setLastError(error instanceof Error ? error : new Error('Failed to load workflows'));
-        // Return empty array instead of throwing to prevent UI breaks
         return [];
       }
     },
