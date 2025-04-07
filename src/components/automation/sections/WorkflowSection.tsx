@@ -10,6 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { InfoIcon } from "lucide-react";
 
 interface WorkflowSectionProps {
   schedule: string;
@@ -32,8 +34,21 @@ export const WorkflowSection = ({
     <div className="space-y-4">
       <div className="flex items-center space-x-4">
         <Workflow className="h-5 w-5 text-primary" />
-        <div>
-          <Label>Full Workflow</Label>
+        <div className="flex-1">
+          <div className="flex items-center gap-2">
+            <Label>Full Workflow</Label>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <InfoIcon className="h-4 w-4 text-muted-foreground cursor-help" />
+              </HoverCardTrigger>
+              <HoverCardContent className="w-80">
+                <p className="text-sm">
+                  Schedule your complete workflow execution including data collection, 
+                  cleaning, analysis, and reporting at your preferred frequency.
+                </p>
+              </HoverCardContent>
+            </HoverCard>
+          </div>
           <p className="text-sm text-muted-foreground">
             Schedule complete workflow execution
           </p>
@@ -65,6 +80,7 @@ export const WorkflowSection = ({
               variant={days.includes(day) ? "default" : "outline"}
               size="sm"
               onClick={() => onDaySelection(day)}
+              title={`Select ${day}`}
             >
               {day.slice(0, 3)}
             </Button>

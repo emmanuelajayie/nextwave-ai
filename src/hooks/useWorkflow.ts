@@ -46,6 +46,7 @@ export const useWorkflow = () => {
           .limit(1);
 
         if (error) {
+          console.error('Supabase error when fetching workflows:', error);
           setLastError(new Error(error.message));
           throw error;
         }
@@ -69,52 +70,59 @@ export const useWorkflow = () => {
           (error.message.includes("recursion") || error.message.includes("permission"))) {
         return false;
       }
-      return failureCount < 1;
+      return failureCount < 2;
     }
   });
 
   // Update workflow configuration
   const { mutate: updateWorkflow, isPending } = useMutation({
     mutationFn: async (config: WorkflowConfig) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('User not authenticated');
-      }
-
-      if (workflows && workflows.length > 0) {
-        // Update existing workflow
-        const { data, error } = await supabase
-          .from('workflows')
-          .update({
-            config,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', workflows[0].id)
-          .select();
-
-        if (error) {
-          throw error;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          throw new Error('User not authenticated');
         }
 
-        return data;
-      } else {
-        // Create new workflow
-        const { data, error } = await supabase
-          .from('workflows')
-          .insert({
-            name: 'Scheduled Tasks',
-            config,
-            status: 'active',
-            created_by: user.id
-          })
-          .select();
+        if (workflows && workflows.length > 0) {
+          // Update existing workflow
+          const { data, error } = await supabase
+            .from('workflows')
+            .update({
+              config,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', workflows[0].id)
+            .select();
 
-        if (error) {
-          throw error;
+          if (error) {
+            console.error('Error updating workflow:', error);
+            throw error;
+          }
+
+          return data;
+        } else {
+          // Create new workflow
+          const { data, error } = await supabase
+            .from('workflows')
+            .insert({
+              name: 'Scheduled Tasks',
+              config,
+              status: 'active',
+              created_by: user.id
+            })
+            .select();
+
+          if (error) {
+            console.error('Error creating workflow:', error);
+            throw error;
+          }
+
+          return data;
         }
-
-        return data;
+      } catch (error) {
+        console.error('Error in mutation:', error);
+        throw error;
       }
     },
     onSuccess: () => {
