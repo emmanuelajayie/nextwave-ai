@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +24,7 @@ export const UpdateScheduler = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Frequency</label>
-            <Select onValueChange={handleScheduleChange}>
+            <Select onValueChange={handleScheduleChange} defaultValue="daily">
               <SelectTrigger>
                 <SelectValue placeholder="Select frequency" />
               </SelectTrigger>
@@ -36,7 +37,7 @@ export const UpdateScheduler = () => {
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Time</label>
-            <Select onValueChange={handleScheduleChange}>
+            <Select onValueChange={handleScheduleChange} defaultValue="morning">
               <SelectTrigger>
                 <SelectValue placeholder="Select time" />
               </SelectTrigger>

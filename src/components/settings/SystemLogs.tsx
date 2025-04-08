@@ -50,7 +50,7 @@ export const SystemLogs = () => {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="success">Success</SelectItem>
               <SelectItem value="error">Error</SelectItem>
               <SelectItem value="warning">Warning</SelectItem>
@@ -63,7 +63,7 @@ export const SystemLogs = () => {
               <SelectValue placeholder="Action" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Actions</SelectItem>
+              <SelectItem value="all">All Actions</SelectItem>
               {uniqueActions.map(action => (
                 <SelectItem key={action} value={action}>{action}</SelectItem>
               ))}

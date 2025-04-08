@@ -15,9 +15,9 @@ import { usePredictiveModel } from "@/hooks/usePredictiveModel";
 import { supabase } from "@/lib/supabase";
 
 export const ModelBuilder = () => {
-  const [selectedSource, setSelectedSource] = useState<string>("");
+  const [selectedSource, setSelectedSource] = useState<string>("sales_data");
   const [modelType, setModelType] = useState<"regression" | "classification" | "clustering">("regression");
-  const [target, setTarget] = useState<string>("");
+  const [target, setTarget] = useState<string>("sales");
   const [industry, setIndustry] = useState<"ecommerce" | "logistics" | "finance" | "tech" | "realestate">("finance");
   
   const { 
