@@ -17,7 +17,7 @@ export class BackendService {
   static async callFunction<T = any>(
     functionName: string, 
     payload?: any, 
-    options: { method?: string; headers?: Record<string, string> } = {}
+    options: { method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'; headers?: Record<string, string> } = {}
   ): Promise<T> {
     try {
       const { data, error } = await supabase.functions.invoke(functionName, {

@@ -1,13 +1,14 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 
-interface SystemLog {
+export interface SystemLog {
   id: string;
   action: string;
   status: string;
-  description: string;
-  metadata?: Record<string, any>;
+  description: string | null;
+  metadata?: Record<string, any> | null;
   created_at: string;
 }
 
@@ -27,8 +28,10 @@ export function useSystemLogs(options: UseSystemLogsOptions = {}) {
 
   // Function to fetch logs
   const fetchLogs = async (): Promise<SystemLog[]> => {
+    // Use type assertion to bypass type checking for the table
+    // that doesn't exist in the generated types yet
     let query = supabase
-      .from('system_logs')
+      .from('system_logs' as any)
       .select('*')
       .order('created_at', { ascending: false })
       .limit(limit);
@@ -49,7 +52,7 @@ export function useSystemLogs(options: UseSystemLogsOptions = {}) {
       throw error;
     }
     
-    return data as SystemLog[];
+    return data as unknown as SystemLog[];
   };
 
   // Use React Query for data fetching with auto-refresh
@@ -103,7 +106,7 @@ export function useSystemLogs(options: UseSystemLogsOptions = {}) {
   const createLog = async (action: string, status: string = 'info', description?: string, metadata?: Record<string, any>) => {
     try {
       const { data, error } = await supabase
-        .from('system_logs')
+        .from('system_logs' as any)
         .insert({
           action,
           status,
