@@ -79,7 +79,7 @@ export const AnalyticsSection = ({
         <Select 
           value={schedule} 
           onValueChange={handleScheduleChange}
-          disabled={false}
+          defaultValue="daily"
         >
           <SelectTrigger>
             <SelectValue placeholder="Select frequency" />
@@ -94,7 +94,7 @@ export const AnalyticsSection = ({
           type="time" 
           value={time}
           onChange={handleTimeChange}
-          disabled={false}
+          defaultValue="09:00"
         />
       </div>
     </div>

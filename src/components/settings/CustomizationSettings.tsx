@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -27,7 +28,7 @@ export const CustomizationSettings = () => {
       <div className="space-y-6">
         <div className="space-y-2">
           <Label>Dashboard Theme</Label>
-          <Select onValueChange={handleThemeChange}>
+          <Select onValueChange={handleThemeChange} defaultValue="light">
             <SelectTrigger>
               <SelectValue placeholder="Select theme" />
             </SelectTrigger>

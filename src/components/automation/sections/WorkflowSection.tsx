@@ -71,7 +71,7 @@ export const WorkflowSection = ({
         </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <Select value={schedule} onValueChange={handleScheduleChange}>
+        <Select value={schedule || "daily"} onValueChange={handleScheduleChange}>
           <SelectTrigger>
             <SelectValue placeholder="Select frequency" />
           </SelectTrigger>
@@ -83,12 +83,13 @@ export const WorkflowSection = ({
         </Select>
         <Input 
           type="time"
-          value={time}
+          value={time || ""}
           onChange={(e) => handleTimeChange(e.target.value)}
+          placeholder="00:00"
         />
       </div>
       
-      {schedule === 'custom' && (
+      {(schedule === 'custom') && (
         <div className="space-y-2">
           <Label className="text-sm">Select days:</Label>
           <div className="flex flex-wrap gap-2">
