@@ -111,6 +111,14 @@ function App() {
               }
             />
             <Route
+              path="/industry-data-processing"
+              element={
+                <PrivateRoute>
+                  <IndustryDataProcessing />
+                </PrivateRoute>
+              }
+            />
+            <Route
               path="/predictive-models"
               element={
                 <PrivateRoute>
@@ -135,7 +143,6 @@ function App() {
               }
             />
             <Route path="/payment/callback" element={<PaymentCallback />} />
-            <Route path="/industry-data-processing" element={<IndustryDataProcessing />} />
             <Route path="*" element={<Navigate to="/auth" />} />
           </Routes>
           <FeedbackDialog />
