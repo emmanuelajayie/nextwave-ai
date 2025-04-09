@@ -14,7 +14,6 @@ import {
 import {
   BarChart3,
   Brain,
-  Database,
   Eraser,
   FileSpreadsheet,
   Home,
@@ -28,7 +27,6 @@ const menuItems = [
   { title: "Dashboard", icon: Home, url: "/" },
   { title: "Data Collection", icon: FileSpreadsheet, url: "/data" },
   { title: "Data Cleaning", icon: Eraser, url: "/data-cleaning" },
-  { title: "Industry Data Processing", icon: Database, url: "/industry-data-processing" },
   { title: "Predictive Models", icon: Brain, url: "/predictive-models" },
   { title: "Dashboards", icon: BarChart3, url: "/dashboards" },
   { title: "Settings", icon: SettingsIcon, url: "/settings" },

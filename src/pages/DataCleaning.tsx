@@ -5,6 +5,7 @@ import { CleaningActions } from "@/components/data-cleaning/CleaningActions";
 import { DataEnrichment } from "@/components/data-cleaning/DataEnrichment";
 import { DataPreview } from "@/components/data-cleaning/DataPreview";
 import { DataCleaningPreferences } from "@/components/setup/DataCleaningPreferences";
+import { LargeDataProcessor } from "@/components/data-handling/LargeDataProcessor";
 
 const DataCleaning = () => {
   return (
@@ -17,6 +18,7 @@ const DataCleaning = () => {
         <div className="grid gap-6">
           <DataCleaningPreferences />
           <DataCleaningTools onCleaningComplete={() => console.log("Cleaning complete")} />
+          <LargeDataProcessor />
           <CleaningActions />
           <DataEnrichment />
           <DataPreview />

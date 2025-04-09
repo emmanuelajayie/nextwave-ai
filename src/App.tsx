@@ -14,7 +14,6 @@ import Settings from "./pages/Settings";
 import PaymentCallback from "./pages/payment/Callback";
 import { FeedbackDialog } from "./components/feedback/FeedbackDialog";
 import { supabase } from "@/lib/supabase";
-import IndustryDataProcessing from "./pages/IndustryDataProcessing";
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<any>(null);
@@ -107,14 +106,6 @@ function App() {
               element={
                 <PrivateRoute>
                   <DataCleaning />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/industry-data-processing"
-              element={
-                <PrivateRoute>
-                  <IndustryDataProcessing />
                 </PrivateRoute>
               }
             />
