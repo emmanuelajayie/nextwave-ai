@@ -12,11 +12,21 @@ interface CompanyDetailsFormProps {
   onSuccess: () => void;
 }
 
+// Supported industries in the application
+const supportedIndustries = [
+  { value: "ecommerce", label: "E-commerce" },
+  { value: "finance", label: "Finance" },
+  { value: "logistics", label: "Logistics" },
+  { value: "tech", label: "Technology" },
+  { value: "realestate", label: "Real Estate" }
+];
+
 export const CompanyDetailsForm = ({ email, onSuccess }: CompanyDetailsFormProps) => {
   const [loading, setLoading] = useState(false);
   const [companyName, setCompanyName] = useState("");
   const [employeeCount, setEmployeeCount] = useState("");
   const [businessSize, setBusinessSize] = useState<string>("");
+  const [industry, setIndustry] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +46,7 @@ export const CompanyDetailsForm = ({ email, onSuccess }: CompanyDetailsFormProps
           company_name: companyName,
           employee_count: parseInt(employeeCount),
           business_size: businessSize,
+          industry: industry // Store the selected industry
         });
 
       if (error) throw error;
@@ -77,6 +88,7 @@ export const CompanyDetailsForm = ({ email, onSuccess }: CompanyDetailsFormProps
           <Select
             value={businessSize}
             onValueChange={(value) => setBusinessSize(value)}
+            required
           >
             <SelectTrigger>
               <SelectValue placeholder="Select Business Size" />
@@ -85,6 +97,24 @@ export const CompanyDetailsForm = ({ email, onSuccess }: CompanyDetailsFormProps
               <SelectItem value="small">Small Business</SelectItem>
               <SelectItem value="medium">Small-Medium Business</SelectItem>
               <SelectItem value="enterprise">Enterprise</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Select
+            value={industry}
+            onValueChange={(value) => setIndustry(value)}
+            required
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select Your Industry" />
+            </SelectTrigger>
+            <SelectContent>
+              {supportedIndustries.map((ind) => (
+                <SelectItem key={ind.value} value={ind.value}>
+                  {ind.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
