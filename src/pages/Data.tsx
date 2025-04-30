@@ -1,4 +1,7 @@
 
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+import { toast } from "sonner";
 import MainLayout from "@/components/layout/MainLayout";
 import { DataImport } from "@/components/data/DataImport";
 import { DataPreview } from "@/components/data/DataPreview";
@@ -9,6 +12,21 @@ import { WebhookConfig } from "@/components/data/WebhookConfig";
 import { ScheduledTasks } from "@/components/automation/ScheduledTasks";
 
 const Data = () => {
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    // Handle OAuth callback params
+    const oauthSuccess = searchParams.get("oauth_success");
+    const oauthError = searchParams.get("oauth_error");
+    const crmType = searchParams.get("crm_type");
+
+    if (oauthSuccess === "true" && crmType) {
+      toast.success(`Successfully connected to ${crmType.charAt(0).toUpperCase() + crmType.slice(1)}`);
+    } else if (oauthError) {
+      toast.error(`Failed to connect: ${oauthError}`);
+    }
+  }, [searchParams]);
+
   return (
     <MainLayout>
       <div className="space-y-6">

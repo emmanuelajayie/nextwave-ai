@@ -1,41 +1,44 @@
 
+# This file was automatically generated. Do not edit it directly.
 project_id = "zpxciicizzdyxqqnixra"
 
-[functions.sync-crm-data]
-verify_jwt = true
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage", "graphql_public"]
 
+[db]
+port = 54322
+
+[studio]
+port = 54323
+
+[inbucket]
+port = 54324
+smtp_port = 54325
+pop3_port = 54326
+
+[storage]
+enabled = true
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+
+[analytics]
+enabled = false
+
+[vector]
+enabled = false
+
+[experimental]
+multisite = false
+dashboard = false
+
+# Edge Functions
 [functions.crm-oauth-callback]
 verify_jwt = false
-
-[functions.process-scheduled-tasks]
-verify_jwt = true
-
-[functions.seed-data]
-verify_jwt = true
-
-[functions.create-storage-bucket]
-verify_jwt = true
-
-[functions.create-system-logs]
-verify_jwt = true
-
-[functions.enrich-data]
-verify_jwt = true
-
-[functions.payment-initialize]
-verify_jwt = true
-
-[functions.payment-verify]
-verify_jwt = true
-
-[functions.predict]
-verify_jwt = true
-
-[functions.process-export]
-verify_jwt = true
-
-[functions.api-management]
-verify_jwt = true
-
-[functions.system-logger]
-verify_jwt = true
+[functions.crm-oauth-initialize]
+verify_jwt = false
+[functions.sync-crm-data]
+verify_jwt = false
