@@ -11,6 +11,22 @@ const SUPPORTED_CRM_TYPES = ['hubspot', 'zoho', 'salesforce'];
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000; // ms
 
+// Hardcoded client credentials
+const CRM_CREDENTIALS = {
+  hubspot: {
+    clientId: "b8b28cdc-3ef6-4571-b069-eb11a9f0762a",
+    clientSecret: "5066b516-a8b9-42df-8e26-65cc87d9ec07"
+  },
+  zoho: {
+    clientId: "1000.WE1B5QXLMYQ53ATX6UMGKXDCQ98U6K",
+    clientSecret: "404b709bf1a967175b9b9eb41ea8f86c94f04d0521"
+  },
+  salesforce: {
+    clientId: "3MVG9n_HvETGhr3BHNeGcl9q29fZKJ2Hbi2uzdjdM4d0IKm0L4dz_pGcCs1gQvS_N2v5A6TiBGDhRoLYgXvaN",
+    clientSecret: "A5FF2C9BD7C5E2C7D62A952DD366C0B4111E85E50D9027BBE9B04B89F9A8BBEF"
+  }
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -115,8 +131,9 @@ async function exchangeCodeForToken(code: string, crmType: string, supabaseClien
         salesforce: "https://login.salesforce.com/services/oauth2/token"
       }[crmType];
 
-      const clientId = Deno.env.get(`${crmType.toUpperCase()}_CLIENT_ID`);
-      const clientSecret = Deno.env.get(`${crmType.toUpperCase()}_CLIENT_SECRET`);
+      // Use hardcoded credentials instead of environment variables
+      const clientId = CRM_CREDENTIALS[crmType as keyof typeof CRM_CREDENTIALS].clientId;
+      const clientSecret = CRM_CREDENTIALS[crmType as keyof typeof CRM_CREDENTIALS].clientSecret;
       const redirectUri = `https://app.nextwaveai.solutions/api/crm/oauth/callback`;
 
       if (!clientId || !clientSecret) {

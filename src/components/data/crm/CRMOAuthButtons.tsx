@@ -3,23 +3,24 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
+// Define CRM configurations with hardcoded client IDs to avoid environment variable issues
 const CRM_CONFIGS = {
   hubspot: {
     name: "HubSpot",
     authUrl: "https://app.hubspot.com/oauth/authorize",
-    clientId: import.meta.env.VITE_HUBSPOT_CLIENT_ID,
+    clientId: "b8b28cdc-3ef6-4571-b069-eb11a9f0762a", // Hard-coded client ID
     scopes: ["contacts", "crm.objects.contacts.read", "crm.objects.contacts.write"],
   },
   zoho: {
     name: "Zoho",
     authUrl: "https://accounts.zoho.com/oauth/v2/auth",
-    clientId: import.meta.env.VITE_ZOHO_CLIENT_ID,
+    clientId: "1000.WE1B5QXLMYQ53ATX6UMGKXDCQ98U6K", // Hard-coded client ID 
     scopes: ["ZohoCRM.modules.ALL", "ZohoCRM.settings.ALL"],
   },
   salesforce: {
     name: "Salesforce",
     authUrl: "https://login.salesforce.com/services/oauth2/authorize",
-    clientId: import.meta.env.VITE_SALESFORCE_CLIENT_ID,
+    clientId: "3MVG9n_HvETGhr3BHNeGcl9q29fZKJ2Hbi2uzdjdM4d0IKm0L4dz_pGcCs1gQvS_N2v5A6TiBGDhRoLYgXvaN", // Hard-coded client ID
     scopes: ["api", "refresh_token"],
   },
 };
