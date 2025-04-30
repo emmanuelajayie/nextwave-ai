@@ -11,7 +11,7 @@ export const GithubAuthButton = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
-          redirectTo: `${window.location.origin}/auth`,
+          redirectTo: `https://app.nextwaveai.solutions/auth`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

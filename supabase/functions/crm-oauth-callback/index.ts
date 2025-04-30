@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -90,12 +89,12 @@ serve(async (req) => {
 
     // Redirect back to the application with success parameter
     return Response.redirect(
-      `${url.origin}/data?oauth_success=true&crm_type=${crmType}`
+      `https://app.nextwaveai.solutions/data?oauth_success=true&crm_type=${crmType}`
     );
   } catch (error) {
     console.error("OAuth callback error:", error);
     return Response.redirect(
-      `${new URL(req.url).origin}/data?oauth_error=${encodeURIComponent(
+      `https://app.nextwaveai.solutions/data?oauth_error=${encodeURIComponent(
         error.message
       )}`
     );
@@ -117,7 +116,7 @@ async function exchangeCodeForToken(code: string, crmType: string, supabaseClien
 
       const clientId = Deno.env.get(`${crmType.toUpperCase()}_CLIENT_ID`);
       const clientSecret = Deno.env.get(`${crmType.toUpperCase()}_CLIENT_SECRET`);
-      const redirectUri = `${Deno.env.get("PUBLIC_URL")}/api/crm/oauth/callback`;
+      const redirectUri = `https://app.nextwaveai.solutions/api/crm/oauth/callback`;
 
       if (!clientId || !clientSecret) {
         throw new Error(`Missing client credentials for ${crmType}`);

@@ -63,8 +63,8 @@ export const CRMOAuthButtons = () => {
         return;
       }
 
-      // Construct redirect URI using window.location.origin
-      const redirectUri = `${window.location.origin}/api/crm/oauth/callback?crm_type=${crmType}`;
+      // Construct redirect URI using the new domain
+      const redirectUri = `https://app.nextwaveai.solutions/api/crm/oauth/callback?crm_type=${crmType}`;
       console.log("Redirect URI:", redirectUri);
 
       // Construct authorization URL with all required parameters
