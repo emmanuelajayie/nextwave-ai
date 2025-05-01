@@ -12,10 +12,6 @@ export const GithubAuthButton = () => {
         provider: 'github',
         options: {
           redirectTo: `${window.location.origin}/auth`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
         }
       });
 

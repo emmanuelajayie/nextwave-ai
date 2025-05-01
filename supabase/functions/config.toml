@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.crm-oauth-callback]
 verify_jwt = false
+
+[functions.crm-oauth-initialize]
+verify_jwt = false

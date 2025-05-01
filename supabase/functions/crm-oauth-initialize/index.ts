@@ -88,8 +88,15 @@ Deno.serve(async (req) => {
       throw new Error("Failed to initialize OAuth flow");
     }
     
-    // Construct redirect URI
-    const redirectUri = `https://app.nextwaveai.solutions/api/crm/oauth/callback?crm_type=${crmType}`;
+    // Construct redirect URI - update for Zoho specifically
+    let redirectUri;
+    
+    if (crmType === "zoho") {
+      // For Zoho we need to use exactly what's configured in their developer portal
+      redirectUri = `https://zpxciicizzdyxqqnixra.supabase.co/functions/v1/crm-oauth-callback?crm_type=${crmType}`;
+    } else {
+      redirectUri = `https://zpxciicizzdyxqqnixra.supabase.co/functions/v1/crm-oauth-callback?crm_type=${crmType}`;
+    }
     
     // Construct authorization URL with all required parameters
     const params = new URLSearchParams({

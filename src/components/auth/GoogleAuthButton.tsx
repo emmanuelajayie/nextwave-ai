@@ -11,10 +11,6 @@ export const GoogleAuthButton = () => {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth`,
-          queryParams: {
-            access_type: 'offline',
-            prompt: 'consent',
-          }
         }
       });
 

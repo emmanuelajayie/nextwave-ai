@@ -136,7 +136,14 @@ async function exchangeCodeForToken(code: string, crmType: string, supabaseClien
         throw new Error(`Missing client credentials for ${crmType}`);
       }
       
-      const redirectUri = `https://app.nextwaveai.solutions/api/crm/oauth/callback?crm_type=${crmType}`;
+      // Use the same redirect URI that was used in the authorize request
+      let redirectUri;
+      if (crmType === "zoho") {
+        redirectUri = `https://zpxciicizzdyxqqnixra.supabase.co/functions/v1/crm-oauth-callback?crm_type=${crmType}`;
+      } else {
+        redirectUri = `https://zpxciicizzdyxqqnixra.supabase.co/functions/v1/crm-oauth-callback?crm_type=${crmType}`;
+      }
+      
       console.log(`Using redirect URI: ${redirectUri}`);
 
       const response = await fetch(tokenEndpoint, {
