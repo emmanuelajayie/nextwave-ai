@@ -63,7 +63,8 @@ serve(async (req) => {
           business_type,
           plan_id,
         },
-        redirect_url: `${req.headers.get("origin")}/payment/callback`,
+        // Use the specified callback URL
+        redirect_url: "https://app.nextwaveai.solutions/payment/callback",
         customizations: {
           title: business_type ? `${business_type} Business Setup` : "Payment",
           description: payment_type === "subscription" ? "Subscription Payment" : "One-time Payment",
