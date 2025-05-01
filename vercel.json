@@ -1,0 +1,44 @@
+
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ],
+  "routes": [
+    {
+      "src": "/auth",
+      "dest": "/"
+    },
+    {
+      "src": "/data",
+      "dest": "/"
+    },
+    {
+      "src": "/data-cleaning",
+      "dest": "/"
+    },
+    {
+      "src": "/predictive-models",
+      "dest": "/"
+    },
+    {
+      "src": "/dashboards",
+      "dest": "/"
+    },
+    {
+      "src": "/settings",
+      "dest": "/"
+    },
+    {
+      "src": "/hubspot/callback",
+      "dest": "/"
+    },
+    {
+      "src": "/zoho/callback",
+      "dest": "/"
+    },
+    {
+      "src": "/payment/callback",
+      "dest": "/"
+    }
+  ]
+}

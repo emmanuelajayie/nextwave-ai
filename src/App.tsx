@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -134,6 +135,18 @@ function App() {
               }
             />
             <Route path="/payment/callback" element={<PaymentCallback />} />
+            
+            {/* CRM OAuth callback routes - redirect to data page with parameters */}
+            <Route 
+              path="/hubspot/callback" 
+              element={<Navigate to="/data?crm_type=hubspot&oauth_success=true" replace />} 
+            />
+            <Route 
+              path="/zoho/callback" 
+              element={<Navigate to="/data?crm_type=zoho&oauth_success=true" replace />} 
+            />
+            
+            {/* Catch-all route that redirects to auth page if not authenticated */}
             <Route path="*" element={<Navigate to="/auth" />} />
           </Routes>
           <FeedbackDialog />

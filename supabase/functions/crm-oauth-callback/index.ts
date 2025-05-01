@@ -88,9 +88,17 @@ serve(async (req) => {
     EdgeRuntime.waitUntil(exchangeCodeForToken(code, crmType, supabaseClient));
 
     // Redirect back to the application with success parameter
-    return Response.redirect(
-      `https://app.nextwaveai.solutions/data?oauth_success=true&crm_type=${crmType}`
-    );
+    // Use app-specific callback routes for better UX
+    const frontendBaseUrl = "https://app.nextwaveai.solutions";
+    
+    if (crmType === "hubspot") {
+      return Response.redirect(`${frontendBaseUrl}/hubspot/callback`);
+    } else if (crmType === "zoho") {
+      return Response.redirect(`${frontendBaseUrl}/zoho/callback`);
+    } else {
+      // Fallback to the data page with parameters
+      return Response.redirect(`${frontendBaseUrl}/data?oauth_success=true&crm_type=${crmType}`);
+    }
   } catch (error) {
     console.error("OAuth callback error:", error);
     return Response.redirect(
