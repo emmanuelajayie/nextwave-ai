@@ -1,101 +1,78 @@
 
-// Function to test a webhook URL by sending a POST request
-// This avoids CORS issues when testing from the browser
+// Follow this setup guide to integrate the Deno SDK: https://deno.land/manual/examples/http_server
+import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-
+// Define CORS headers for browser requests
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
 serve(async (req) => {
-  // Handle CORS preflight request
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
   }
-
+  
   try {
+    // Parse the request body
     const { webhookUrl, testPayload } = await req.json();
-
-    if (!webhookUrl || !testPayload) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: "Missing webhook URL or test payload" 
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
-    }
-
+    
     console.log(`Testing webhook URL: ${webhookUrl}`);
     
-    // Send a test request to the webhook URL with a timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-    
-    try {
-      const response = await fetch(webhookUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Source": "NextWave AI",
-          "X-Test": "true"
-        },
-        body: JSON.stringify(testPayload),
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      // Check if the response is successful (status code 2xx)
-      const success = response.ok;
-      const status = response.status;
-      const responseBody = await response.text().catch(() => "");
-      
-      console.log(`Webhook test ${success ? "succeeded" : "failed"} with status: ${status}`);
-      
+    if (!webhookUrl) {
       return new Response(
-        JSON.stringify({ 
-          success, 
-          status,
-          responseBody: responseBody.substring(0, 1000) // Limit response size
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200,
-        }
-      );
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      console.error(`Error sending webhook request: ${fetchError.message}`);
-      
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: fetchError.message
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 200, // Still return 200 to client, but with error details
-        }
+        JSON.stringify({ success: false, error: 'Missing webhook URL' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
-  } catch (error) {
-    console.error(`Error in test-webhook function: ${error.message}`);
     
+    // Test payload with defaults if not provided
+    const payload = testPayload || {
+      event: "test",
+      timestamp: new Date().toISOString(),
+      message: "This is a webhook test"
+    };
+    
+    // Try to send a request to the webhook URL
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    
+    // Get status code and response text
+    const statusCode = response.status;
+    const responseBody = await response.text();
+    
+    console.log(`Webhook response: ${statusCode}, ${responseBody}`);
+    
+    // Consider webhook test successful if status code is in 2xx range
+    const success = statusCode >= 200 && statusCode < 300;
+    
+    // Return the test result
+    return new Response(
+      JSON.stringify({
+        success,
+        statusCode,
+        responseBody: responseBody.substring(0, 1000), // Limit response size
+        message: success ? 'Webhook test successful' : 'Webhook test failed'
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error(`Error testing webhook: ${error.message}`);
+    
+    // Return error response
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error.message,
+        message: 'Failed to test webhook'
       }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
 });

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { WebhookFormValues } from "./webhook-schema";
 import ErrorLogger from "@/utils/errorLogger";
 import { BackendService } from "@/lib/backend-service";
@@ -54,14 +54,26 @@ export const useWebhookForm = (form: UseFormReturn<WebhookFormValues>) => {
       // Even if test fails, we'll allow saving the webhook but with a different status
       const webhookStatus = testResult ? "active" : "pending";
 
-      // Save webhook configuration to database - using insert that doesn't reference team_members
+      // Get current timestamp for last_tested_at
+      const now = new Date().toISOString();
+
+      // Create a test result object
+      const testResultData = {
+        success: testResult,
+        tested_at: now,
+        error: testResult ? null : "Webhook test failed or did not respond properly"
+      };
+
+      // Save webhook configuration to database using the new crm_webhooks table
       const { error } = await supabase
-        .from("crm_webhooks") // Use a dedicated table for webhooks
+        .from("crm_webhooks")
         .insert({
           name: values.name,
           webhook_url: values.webhookUrl,
           status: webhookStatus,
-          created_at: new Date().toISOString(),
+          created_at: now,
+          last_tested_at: now,
+          test_result: testResultData
         });
 
       if (error) {

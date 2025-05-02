@@ -75,6 +75,39 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_webhooks: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_tested_at: string | null
+          name: string
+          status: string
+          test_result: Json | null
+          updated_at: string | null
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_tested_at?: string | null
+          name: string
+          status?: string
+          test_result?: Json | null
+          updated_at?: string | null
+          webhook_url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_tested_at?: string | null
+          name?: string
+          status?: string
+          test_result?: Json | null
+          updated_at?: string | null
+          webhook_url?: string
+        }
+        Relationships: []
+      }
       data_sources: {
         Row: {
           created_at: string | null
