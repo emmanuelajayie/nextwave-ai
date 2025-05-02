@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { webhookFormSchema, type WebhookFormValues } from "./webhook-schema";
 import { useWebhookForm } from "./use-webhook-form";
+import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 
 export const WebhookForm = () => {
   const form = useForm<WebhookFormValues>({
@@ -23,7 +25,21 @@ export const WebhookForm = () => {
     },
   });
 
-  const { isLoading, onSubmit } = useWebhookForm(form);
+  const { isLoading, testStatus, onSubmit } = useWebhookForm(form);
+
+  // Render status indicator based on test status
+  const renderTestStatus = () => {
+    switch (testStatus) {
+      case "testing":
+        return <Loader2 className="h-4 w-4 animate-spin text-primary ml-2" />;
+      case "success":
+        return <CheckCircle className="h-4 w-4 text-green-500 ml-2" />;
+      case "failed":
+        return <AlertCircle className="h-4 w-4 text-red-500 ml-2" />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <Form {...form}>
@@ -51,12 +67,17 @@ export const WebhookForm = () => {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Webhook URL</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="https://your-webhook-url.com"
-                  {...field}
-                />
-              </FormControl>
+              <div className="flex items-center">
+                <FormControl>
+                  <div className="flex-1 relative">
+                    <Input
+                      placeholder="https://your-webhook-url.com"
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
+                {renderTestStatus()}
+              </div>
               <FormDescription>
                 The URL that will receive webhook events
               </FormDescription>
@@ -66,7 +87,14 @@ export const WebhookForm = () => {
         />
 
         <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Configuring..." : "Configure Webhook"}
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {testStatus === "testing" ? "Testing..." : "Configuring..."}
+            </>
+          ) : (
+            "Configure Webhook"
+          )}
         </Button>
       </form>
     </Form>
