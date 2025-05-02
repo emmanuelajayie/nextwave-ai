@@ -64,9 +64,10 @@ export const useWebhookForm = (form: UseFormReturn<WebhookFormValues>) => {
         error: testResult ? null : "Webhook test failed or did not respond properly"
       };
 
-      // Save webhook configuration to database using the new crm_webhooks table
-      const { error } = await supabase
-        .from("crm_webhooks")
+      // Save webhook configuration to database using the crm_webhooks table
+      // Use as any to bypass TypeScript not knowing about the new table yet
+      const { error } = await (supabase
+        .from('crm_webhooks' as any)
         .insert({
           name: values.name,
           webhook_url: values.webhookUrl,
@@ -74,7 +75,7 @@ export const useWebhookForm = (form: UseFormReturn<WebhookFormValues>) => {
           created_at: now,
           last_tested_at: now,
           test_result: testResultData
-        });
+        }) as any);
 
       if (error) {
         throw new Error(`Database error: ${error.message}`);
