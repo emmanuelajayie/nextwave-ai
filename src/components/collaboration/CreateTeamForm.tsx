@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus, Loader2 } from "lucide-react";
@@ -14,6 +14,30 @@ interface CreateTeamFormProps {
 export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
   const [newTeamName, setNewTeamName] = useState("");
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
+  const [session, setSession] = useState<any>(null);
+
+  // Fetch the session when component mounts
+  useEffect(() => {
+    const fetchSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error fetching session:", error);
+      } else {
+        setSession(data.session);
+      }
+    };
+
+    fetchSession();
+
+    // Set up listener for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, currentSession) => {
+        setSession(currentSession);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const createTeam = async () => {
     if (!newTeamName.trim()) {
@@ -23,13 +47,21 @@ export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
 
     try {
       setIsCreatingTeam(true);
-      const { data: userData, error: userError } = await supabase.auth.getUser();
       
-      if (userError || !userData.user) {
-        console.error("Auth error:", userError);
-        toast.error("You must be logged in to create a team");
-        return;
+      // Check if we have a current session
+      if (!session) {
+        // Try to get it one more time in case it changed
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !sessionData.session) {
+          console.error("No active session found:", sessionError || "Session is null");
+          toast.error("You must be logged in to create a team");
+          return;
+        }
+        setSession(sessionData.session);
       }
+
+      const userId = session.user.id;
+      console.log("Creating team with user ID:", userId);
 
       // Check for duplicate team name
       const { data: existingTeam, error: checkError } = await supabase
@@ -52,7 +84,7 @@ export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
         .from("teams")
         .insert([{ 
           name: newTeamName.trim(),
-          owner_id: userData.user.id
+          owner_id: userId
         }])
         .select()
         .single();
@@ -78,7 +110,7 @@ export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
           .from("team_members")
           .insert([{
             team_id: data.id,
-            user_id: userData.user.id,
+            user_id: userId,
             role: 'admin'
           }]);
 

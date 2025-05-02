@@ -21,14 +21,52 @@ interface Team {
 export const TeamManagement = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState<any>(null);
 
+  // Set up authentication listener
   useEffect(() => {
-    fetchTeams();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, currentSession) => {
+        setSession(currentSession);
+      }
+    );
+
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error("Error getting session:", error);
+      } else {
+        setSession(data.session);
+      }
+    };
+
+    getInitialSession();
+
+    return () => subscription.unsubscribe();
   }, []);
 
+  // Fetch teams when session changes or when teams need to be refreshed
+  useEffect(() => {
+    if (session?.user) {
+      fetchTeams();
+    } else {
+      setTeams([]);
+      setIsLoading(false);
+    }
+  }, [session]);
+
   const fetchTeams = async () => {
+    if (!session?.user) {
+      console.log("No authenticated user found, skipping team fetch");
+      setIsLoading(false);
+      return;
+    }
+
     setIsLoading(true);
     try {
+      console.log("Fetching teams for user:", session.user.id);
+
       // First, fetch teams data
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
