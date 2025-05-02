@@ -65,7 +65,7 @@ export const useWebhookForm = (form: UseFormReturn<WebhookFormValues>) => {
       };
 
       // Save webhook configuration to database using the crm_webhooks table
-      // Use as any to bypass TypeScript not knowing about the new table yet
+      // Use as any to bypass TypeScript not knowing about the table yet
       const { error } = await (supabase
         .from('crm_webhooks' as any)
         .insert({
