@@ -15,6 +15,7 @@ import {
 import { webhookFormSchema, type WebhookFormValues } from "./webhook-schema";
 import { useWebhookForm } from "./use-webhook-form";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const WebhookForm = () => {
   const form = useForm<WebhookFormValues>({
@@ -31,11 +32,50 @@ export const WebhookForm = () => {
   const renderTestStatus = () => {
     switch (testStatus) {
       case "testing":
-        return <Loader2 className="h-4 w-4 animate-spin text-primary ml-2" />;
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary ml-2" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Testing webhook connection...</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
       case "success":
-        return <CheckCircle className="h-4 w-4 text-green-500 ml-2" />;
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 ml-2" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Webhook test successful!</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
       case "failed":
-        return <AlertCircle className="h-4 w-4 text-red-500 ml-2" />;
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center">
+                  <AlertCircle className="h-4 w-4 text-red-500 ml-2" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Webhook test failed. Check that your endpoint is accessible.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        );
       default:
         return null;
     }

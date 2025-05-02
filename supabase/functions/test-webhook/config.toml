@@ -1,0 +1,4 @@
+
+# Standard supabase edge function config
+[build]
+command = ""

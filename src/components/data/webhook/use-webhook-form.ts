@@ -5,37 +5,31 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { WebhookFormValues } from "./webhook-schema";
 import ErrorLogger from "@/utils/errorLogger";
+import { BackendService } from "@/lib/backend-service";
 
 export const useWebhookForm = (form: UseFormReturn<WebhookFormValues>) => {
   const [isLoading, setIsLoading] = useState(false);
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "failed">("idle");
 
-  // Function to test webhook by sending a test payload
+  // Function to test webhook by sending a test payload via backend service
+  // This avoids CORS issues that happen when trying to send directly from browser
   const testWebhook = async (url: string): Promise<boolean> => {
     try {
       console.log("Testing webhook URL:", url);
       
-      // Send a test request to the webhook URL
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      // Use BackendService to test the webhook - this sends the request from the server
+      // which avoids CORS issues
+      const testResult = await BackendService.callFunction('test-webhook', {
+        webhookUrl: url,
+        testPayload: {
           event: "test",
           timestamp: new Date().toISOString(),
           message: "This is a test webhook from NextWave AI",
-        }),
+        }
       });
       
-      // Check if the response is successful (status code 2xx)
-      if (!response.ok) {
-        console.warn("Webhook test failed with status:", response.status);
-        return false;
-      }
-      
-      console.log("Webhook test successful");
-      return true;
+      console.log("Webhook test result:", testResult);
+      return testResult?.success === true;
     } catch (error) {
       console.error("Error testing webhook:", error);
       // We'll still allow saving if the test fails - some webhook endpoints 
@@ -60,13 +54,15 @@ export const useWebhookForm = (form: UseFormReturn<WebhookFormValues>) => {
       // Even if test fails, we'll allow saving the webhook but with a different status
       const webhookStatus = testResult ? "active" : "pending";
 
-      // Save webhook configuration to database
-      const { error } = await supabase.from("crm_integrations").insert({
-        name: values.name,
-        crm_type: "custom",
-        webhook_url: values.webhookUrl,
-        status: webhookStatus,
-      });
+      // Save webhook configuration to database - using insert that doesn't reference team_members
+      const { error } = await supabase
+        .from("crm_webhooks") // Use a dedicated table for webhooks
+        .insert({
+          name: values.name,
+          webhook_url: values.webhookUrl,
+          status: webhookStatus,
+          created_at: new Date().toISOString(),
+        });
 
       if (error) {
         throw new Error(`Database error: ${error.message}`);
@@ -76,7 +72,7 @@ export const useWebhookForm = (form: UseFormReturn<WebhookFormValues>) => {
       if (testResult) {
         toast.success("Custom CRM webhook configured and verified successfully");
       } else {
-        toast.success(
+        toast.warning(
           "Custom CRM webhook saved, but test delivery failed. Webhook may still work for real events."
         );
       }
