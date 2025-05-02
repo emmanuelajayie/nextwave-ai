@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FolderPlus, Loader2 } from "lucide-react";
+import { FolderPlus, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { FileItem } from "./types";
@@ -15,6 +15,7 @@ export const FileStorage = () => {
   const [currentPath, setCurrentPath] = useState("/");
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     loadFiles();
@@ -22,8 +23,8 @@ export const FileStorage = () => {
 
   const loadFiles = async () => {
     try {
-      console.log('Loading files from path:', currentPath);
       setIsLoading(true);
+      console.log('Loading files from path:', currentPath);
       
       const { data, error } = await supabase
         .from("file_storage")
@@ -45,7 +46,13 @@ export const FileStorage = () => {
       toast.error("Failed to load files");
     } finally {
       setIsLoading(false);
+      setIsRefreshing(false);
     }
+  };
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    loadFiles();
   };
 
   const navigateToFolder = (folderPath: string) => {
@@ -53,7 +60,7 @@ export const FileStorage = () => {
     setCurrentPath(folderPath);
   };
 
-  if (isLoading) {
+  if (isLoading && !isRefreshing) {
     return (
       <Card className="p-6">
         <div className="flex items-center justify-center h-64">
@@ -72,7 +79,16 @@ export const FileStorage = () => {
             Current path: {currentPath}
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            title="Refresh files"
+          >
+            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
           <Button
             variant="outline"
             onClick={() => setIsCreatingFolder(!isCreatingFolder)}
@@ -90,7 +106,10 @@ export const FileStorage = () => {
       {isCreatingFolder && (
         <CreateFolderForm
           currentPath={currentPath}
-          onFolderCreated={loadFiles}
+          onFolderCreated={() => {
+            loadFiles();
+            setIsCreatingFolder(false);
+          }}
         />
       )}
 
