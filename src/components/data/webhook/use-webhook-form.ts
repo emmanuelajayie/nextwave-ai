@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { WebhookFormValues } from "./webhook-schema";
 import ErrorLogger from "@/utils/errorLogger";
 import { BackendService } from "@/lib/backend-service";
@@ -65,9 +65,8 @@ export const useWebhookForm = (form: UseFormReturn<WebhookFormValues>) => {
       };
 
       // Save webhook configuration to database using the crm_webhooks table
-      // Use as any to bypass TypeScript not knowing about the table yet
-      const { error } = await (supabase
-        .from('crm_webhooks' as any)
+      const { error } = await supabase
+        .from('crm_webhooks')
         .insert({
           name: values.name,
           webhook_url: values.webhookUrl,
@@ -75,7 +74,7 @@ export const useWebhookForm = (form: UseFormReturn<WebhookFormValues>) => {
           created_at: now,
           last_tested_at: now,
           test_result: testResultData
-        }) as any);
+        });
 
       if (error) {
         throw new Error(`Database error: ${error.message}`);

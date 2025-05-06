@@ -1,78 +1,80 @@
 
-// Follow this setup guide to integrate the Deno SDK: https://deno.land/manual/examples/http_server
-import { serve } from "https://deno.land/std@0.131.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
-// Define CORS headers for browser requests
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders })
   }
-  
+
   try {
     // Parse the request body
-    const { webhookUrl, testPayload } = await req.json();
-    
-    console.log(`Testing webhook URL: ${webhookUrl}`);
+    const { webhookUrl, testPayload } = await req.json()
+    console.log(`Testing webhook URL: ${webhookUrl}`)
     
     if (!webhookUrl) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Missing webhook URL' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      );
+      throw new Error('Webhook URL is required')
     }
-    
-    // Test payload with defaults if not provided
+
+    // Create a default test payload if none was provided
     const payload = testPayload || {
-      event: "test",
+      event: "webhook_test",
       timestamp: new Date().toISOString(),
-      message: "This is a webhook test"
-    };
-    
-    // Try to send a request to the webhook URL
+      status: "success",
+      message: "This is a test webhook from Supabase Edge Functions",
+    }
+
+    // Send a test request to the webhook URL
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'User-Agent': 'Supabase-Webhook-Tester',
       },
       body: JSON.stringify(payload),
-    });
+    })
+
+    const success = response.status >= 200 && response.status < 300
+    let responseText = ''
     
-    // Get status code and response text
-    const statusCode = response.status;
-    const responseBody = await response.text();
-    
-    console.log(`Webhook response: ${statusCode}, ${responseBody}`);
-    
-    // Consider webhook test successful if status code is in 2xx range
-    const success = statusCode >= 200 && statusCode < 300;
-    
-    // Return the test result
+    try {
+      responseText = await response.text()
+    } catch (e) {
+      console.error('Error reading response body:', e)
+      responseText = 'Could not read response body'
+    }
+
+    // Return the result
     return new Response(
       JSON.stringify({
         success,
-        statusCode,
-        responseBody: responseBody.substring(0, 1000), // Limit response size
-        message: success ? 'Webhook test successful' : 'Webhook test failed'
+        statusCode: response.status,
+        statusText: response.statusText,
+        responseBody: responseText.substring(0, 500), // Truncate if too long
+        testedAt: new Date().toISOString(),
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
   } catch (error) {
-    console.error(`Error testing webhook: ${error.message}`);
+    console.error('Error testing webhook:', error)
     
-    // Return error response
     return new Response(
-      JSON.stringify({ 
-        success: false, 
+      JSON.stringify({
+        success: false,
         error: error.message,
-        message: 'Failed to test webhook'
+        testedAt: new Date().toISOString(),
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-    );
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
   }
-});
+})

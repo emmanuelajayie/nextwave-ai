@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Users } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import ErrorLogger from "@/utils/errorLogger";
 import { CreateTeamForm } from "./CreateTeamForm";
 import { TeamList } from "./TeamList";
@@ -90,15 +90,14 @@ export const TeamManagement = () => {
         // Use proper SQL aggregation instead of .group() method
         const { data: memberCounts, error: membersError } = await supabase
           .from("team_members")
-          .select("team_id, count(*)");
+          .select("team_id, count");
           
         if (!membersError && memberCounts) {
           // Create a map of team_id -> member count
           const countMap: Record<string, number> = {};
           
           memberCounts.forEach((item: any) => {
-            const count = item.count !== null ? parseInt(String(item.count)) : 0;
-            countMap[item.team_id] = count;
+            countMap[item.team_id] = parseInt(String(item.count));
           });
           
           // Add the counts to the teams data

@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import ErrorLogger from "@/utils/errorLogger";
+import { BackendService } from "@/lib/backend-service";
 
 export const DataImport = () => {
   const [isUploading, setIsUploading] = useState(false);
@@ -21,31 +22,22 @@ export const DataImport = () => {
   });
 
   const handleConnectGoogleSheets = async () => {
-    setIsConnecting("google");
     try {
-      // In a real implementation, this would redirect to Google OAuth
-      // For now, we'll simulate the connection with a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsConnecting("google");
+      console.log("Initiating Google Sheets OAuth flow");
       
-      // Record the connection in Supabase
-      if (user) {
-        const { error } = await supabase
-          .from("data_sources")
-          .insert({
-            user_id: user.id,
-            name: "Google Sheets Data",
-            type: "google_sheets",
-            status: "Connected",
-            last_sync: new Date().toISOString()
-          });
-          
-        if (error) throw error;
+      // Use the API function to get the OAuth URL
+      const { url, error } = await BackendService.callFunction('crm-oauth-initialize', {
+        provider: 'google_sheets',
+        redirect_uri: `${window.location.origin}/data?crm_type=google_sheets&oauth_success=true`
+      });
+      
+      if (error || !url) {
+        throw new Error(error || "Failed to generate OAuth URL");
       }
       
-      toast.success("Successfully connected to Google Sheets");
-      
-      // Notify that a data source was updated
-      window.dispatchEvent(new CustomEvent("data-source-updated"));
+      // Redirect to the OAuth URL
+      window.location.href = url;
     } catch (error) {
       console.error("Error connecting to Google Sheets:", error);
       toast.error("Failed to connect to Google Sheets");
@@ -56,31 +48,22 @@ export const DataImport = () => {
   };
 
   const handleConnectExcel = async () => {
-    setIsConnecting("excel");
     try {
-      // In a real implementation, this would redirect to Microsoft OAuth
-      // For now, we'll simulate the connection with a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      setIsConnecting("excel");
+      console.log("Initiating Excel Online OAuth flow");
       
-      // Record the connection in Supabase
-      if (user) {
-        const { error } = await supabase
-          .from("data_sources")
-          .insert({
-            user_id: user.id,
-            name: "Excel Online Data",
-            type: "excel_online",
-            status: "Connected",
-            last_sync: new Date().toISOString()
-          });
-          
-        if (error) throw error;
+      // Use the API function to get the OAuth URL
+      const { url, error } = await BackendService.callFunction('crm-oauth-initialize', {
+        provider: 'excel_online',
+        redirect_uri: `${window.location.origin}/data?crm_type=excel_online&oauth_success=true`
+      });
+      
+      if (error || !url) {
+        throw new Error(error || "Failed to generate OAuth URL");
       }
       
-      toast.success("Successfully connected to Excel Online");
-      
-      // Notify that a data source was updated
-      window.dispatchEvent(new CustomEvent("data-source-updated"));
+      // Redirect to the OAuth URL
+      window.location.href = url;
     } catch (error) {
       console.error("Error connecting to Excel Online:", error);
       toast.error("Failed to connect to Excel Online");
@@ -115,7 +98,8 @@ export const DataImport = () => {
             folder_path: "/excel_uploads/",
             size: file.size,
             mime_type: file.type,
-            is_folder: false
+            is_folder: false,
+            user_id: user.id
           });
           
         if (fileStorageError) throw fileStorageError;
@@ -131,6 +115,8 @@ export const DataImport = () => {
           });
           
         if (dataSourceError) throw dataSourceError;
+      } else {
+        throw new Error("You must be logged in to upload files");
       }
       
       toast.success("File uploaded successfully");

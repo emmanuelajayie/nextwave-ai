@@ -15,15 +15,20 @@ const Data = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    // Handle OAuth callback params
-    const oauthSuccess = searchParams.get("oauth_success");
-    const oauthError = searchParams.get("oauth_error");
-    const crmType = searchParams.get("crm_type");
+    try {
+      // Handle OAuth callback params
+      const oauthSuccess = searchParams.get("oauth_success");
+      const oauthError = searchParams.get("oauth_error");
+      const crmType = searchParams.get("crm_type");
 
-    if (oauthSuccess === "true" && crmType) {
-      toast.success(`Successfully connected to ${crmType.charAt(0).toUpperCase() + crmType.slice(1)}`);
-    } else if (oauthError) {
-      toast.error(`Failed to connect: ${oauthError}`);
+      if (oauthSuccess === "true" && crmType) {
+        toast.success(`Successfully connected to ${crmType.charAt(0).toUpperCase() + crmType.slice(1)}`);
+      } else if (oauthError) {
+        toast.error(`Failed to connect: ${oauthError}`);
+      }
+    } catch (error) {
+      console.error("Error processing search params:", error);
+      // Don't show an error toast here to avoid unnecessary user confusion
     }
   }, [searchParams]);
 

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ErrorLogger from "@/utils/errorLogger";
 
@@ -48,12 +48,10 @@ export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
     try {
       setIsCreatingTeam(true);
       
-      // Check if we have a current session
+      // Ensure we have the latest session
       if (!session) {
-        // Try to get it one more time in case it changed
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !sessionData.session) {
-          console.error("No active session found:", sessionError || "Session is null");
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session) {
           toast.error("You must be logged in to create a team");
           return;
         }

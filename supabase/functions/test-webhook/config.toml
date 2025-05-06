@@ -1,8 +1,3 @@
 
-# Standard supabase edge function config
-[build]
-command = ""
-
-# Make function callable by authenticated users
-[functions."test-webhook"]
+[functions.test-webhook]
 verify_jwt = true
