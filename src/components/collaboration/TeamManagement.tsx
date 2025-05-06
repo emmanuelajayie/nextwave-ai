@@ -21,23 +21,35 @@ interface Team {
 export const TeamManagement = () => {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [session, setSession] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Set up authentication listener
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, currentSession) => {
-        setSession(currentSession);
+        const newAuthState = !!currentSession;
+        setIsAuthenticated(newAuthState);
+        
+        if (newAuthState && !isAuthenticated) {
+          // Only fetch teams when auth state changes from false to true
+          console.log("Auth state changed to logged in, fetching teams");
+          fetchTeams();
+        }
       }
     );
 
     // Get initial session
     const getInitialSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error getting session:", error);
+      const { data } = await supabase.auth.getUser();
+      const hasSession = !!data.user;
+      setIsAuthenticated(hasSession);
+      
+      if (hasSession) {
+        console.log("User is authenticated, fetching teams");
+        fetchTeams();
       } else {
-        setSession(data.session);
+        console.log("User not authenticated");
+        setIsLoading(false);
       }
     };
 
@@ -46,26 +58,15 @@ export const TeamManagement = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Fetch teams when session changes or when teams need to be refreshed
-  useEffect(() => {
-    if (session?.user) {
-      fetchTeams();
-    } else {
-      setTeams([]);
-      setIsLoading(false);
-    }
-  }, [session]);
-
   const fetchTeams = async () => {
-    if (!session?.user) {
-      console.log("No authenticated user found, skipping team fetch");
+    if (!isAuthenticated) {
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
     try {
-      console.log("Fetching teams for user:", session.user.id);
+      console.log("Fetching teams");
 
       // First, fetch teams data
       const { data: teamsData, error: teamsError } = await supabase
@@ -76,42 +77,52 @@ export const TeamManagement = () => {
         console.error("Error fetching teams:", teamsError);
         ErrorLogger.logError(new Error(teamsError.message), "Unable to load teams data");
         toast.error("Failed to load teams");
+        setIsLoading(false);
         return;
       }
 
-      if (!teamsData) {
+      if (!teamsData || teamsData.length === 0) {
+        console.log("No teams found");
         setTeams([]);
+        setIsLoading(false);
         return;
       }
       
+      console.log(`Found ${teamsData.length} teams`);
+      
       // Get team member counts in a separate query
       const teamIds = teamsData.map(team => team.id);
-      if (teamIds.length > 0) {
-        // Use proper SQL aggregation instead of .group() method
-        const { data: memberCounts, error: membersError } = await supabase
+      
+      try {
+        // Use a simpler query for member counts
+        const { data: teamMembers, error: membersError } = await supabase
           .from("team_members")
-          .select("team_id, count");
+          .select("team_id");
           
-        if (!membersError && memberCounts) {
-          // Create a map of team_id -> member count
-          const countMap: Record<string, number> = {};
-          
-          memberCounts.forEach((item: any) => {
-            countMap[item.team_id] = parseInt(String(item.count));
-          });
-          
-          // Add the counts to the teams data
-          const teamsWithCounts: Team[] = teamsData.map(team => ({
-            ...team,
-            memberCount: countMap[team.id] || 0
-          }));
-          
-          setTeams(teamsWithCounts);
-        } else {
-          // If there was an error getting counts, just use the teams data without counts
+        if (membersError) {
+          console.error("Error fetching team members:", membersError);
+          // Just continue with the teams data we have
           setTeams(teamsData);
+          return;
         }
-      } else {
+        
+        // Count members per team
+        const countMap: Record<string, number> = {};
+        teamMembers?.forEach(member => {
+          const teamId = member.team_id;
+          countMap[teamId] = (countMap[teamId] || 0) + 1;
+        });
+        
+        // Add the counts to the teams data
+        const teamsWithCounts: Team[] = teamsData.map(team => ({
+          ...team,
+          memberCount: countMap[team.id] || 0
+        }));
+        
+        setTeams(teamsWithCounts);
+      } catch (countError) {
+        console.error("Error processing team member counts:", countError);
+        // Just use the teams data without counts
         setTeams(teamsData);
       }
       
@@ -143,12 +154,20 @@ export const TeamManagement = () => {
       </div>
 
       <div className="space-y-4">
-        <CreateTeamForm onTeamCreated={fetchTeams} />
-        <TeamList 
-          teams={teams}
-          isLoading={isLoading}
-          onManageTeam={handleManageTeam}
-        />
+        {isAuthenticated ? (
+          <>
+            <CreateTeamForm onTeamCreated={fetchTeams} />
+            <TeamList 
+              teams={teams}
+              isLoading={isLoading}
+              onManageTeam={handleManageTeam}
+            />
+          </>
+        ) : (
+          <p className="text-center text-muted-foreground py-4">
+            You must be logged in to manage teams
+          </p>
+        )}
       </div>
     </Card>
   );

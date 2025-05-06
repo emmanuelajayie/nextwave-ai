@@ -13,11 +13,49 @@ serve(async (req) => {
   }
 
   try {
-    const { data, enrichmentType } = await req.json()
+    let requestData;
+    try {
+      requestData = await req.json();
+    } catch (parseError) {
+      console.error("Error parsing request:", parseError);
+      return new Response(JSON.stringify({ 
+        error: "Invalid request format. Expected JSON body." 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    const { data, enrichmentType } = requestData;
+    
+    if (!data || !Array.isArray(data)) {
+      return new Response(JSON.stringify({ 
+        error: "Data must be provided as an array" 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (!enrichmentType) {
+      return new Response(JSON.stringify({ 
+        error: "Enrichment type must be specified" 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
 
     if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured')
+      console.error("OpenAI API key not configured");
+      return new Response(JSON.stringify({ 
+        error: "OpenAI API key not configured on the server" 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     console.log("Enriching data:", { enrichmentType, dataLength: data.length })
@@ -47,8 +85,41 @@ serve(async (req) => {
       }),
     })
 
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error("OpenAI API error:", response.status, errorBody);
+      return new Response(JSON.stringify({ 
+        error: `OpenAI API error: ${response.status}` 
+      }), {
+        status: 502, // Bad gateway
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     const result = await response.json()
-    const enrichedData = JSON.parse(result.choices[0].message.content)
+    
+    if (!result.choices || !result.choices[0] || !result.choices[0].message) {
+      console.error("Unexpected response format from OpenAI:", result);
+      return new Response(JSON.stringify({ 
+        error: "Invalid response format from AI service" 
+      }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    let enrichedData;
+    try {
+      enrichedData = JSON.parse(result.choices[0].message.content);
+    } catch (parseError) {
+      console.error("Error parsing AI response as JSON:", parseError);
+      return new Response(JSON.stringify({ 
+        error: "AI returned invalid JSON format" 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     return new Response(JSON.stringify({ enrichedData }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

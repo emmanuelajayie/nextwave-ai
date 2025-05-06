@@ -15,20 +15,17 @@ const Data = () => {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    try {
-      // Handle OAuth callback params
-      const oauthSuccess = searchParams.get("oauth_success");
-      const oauthError = searchParams.get("oauth_error");
-      const crmType = searchParams.get("crm_type");
+    // Don't wrap this in a try-catch to let potential errors bubble up for debugging
+    // Handle OAuth callback params
+    const oauthSuccess = searchParams.get("oauth_success");
+    const oauthError = searchParams.get("oauth_error");
+    const crmType = searchParams.get("crm_type");
 
-      if (oauthSuccess === "true" && crmType) {
-        toast.success(`Successfully connected to ${crmType.charAt(0).toUpperCase() + crmType.slice(1)}`);
-      } else if (oauthError) {
-        toast.error(`Failed to connect: ${oauthError}`);
-      }
-    } catch (error) {
-      console.error("Error processing search params:", error);
-      // Don't show an error toast here to avoid unnecessary user confusion
+    if (oauthSuccess === "true" && crmType) {
+      const formattedCrmType = crmType.charAt(0).toUpperCase() + crmType.slice(1).replace('_', ' ');
+      toast.success(`Successfully connected to ${formattedCrmType}`);
+    } else if (oauthError) {
+      toast.error(`Failed to connect: ${oauthError}`);
     }
   }, [searchParams]);
 
@@ -39,7 +36,6 @@ const Data = () => {
         <p className="text-muted-foreground mb-6">
           Connect to your CRM systems, import data from various sources, and set up automated data collection.
         </p>
-        <ScheduledTasks />
         <div className="grid gap-6">
           <DataImport />
           <div className="grid md:grid-cols-2 gap-6">
@@ -49,6 +45,7 @@ const Data = () => {
           <WebhookConfig />
           <DataSources />
           <DataPreview />
+          <ScheduledTasks />
         </div>
       </div>
     </MainLayout>

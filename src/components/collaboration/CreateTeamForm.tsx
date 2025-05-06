@@ -14,29 +14,20 @@ interface CreateTeamFormProps {
 export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
   const [newTeamName, setNewTeamName] = useState("");
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
-  const [session, setSession] = useState<any>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
-  // Fetch the session when component mounts
   useEffect(() => {
-    const fetchSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
+    // Get the current user ID when component mounts
+    const getUserId = async () => {
+      const { data, error } = await supabase.auth.getUser();
       if (error) {
-        console.error("Error fetching session:", error);
-      } else {
-        setSession(data.session);
+        console.error("Error fetching user:", error);
+      } else if (data?.user) {
+        setUserId(data.user.id);
       }
     };
 
-    fetchSession();
-
-    // Set up listener for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, currentSession) => {
-        setSession(currentSession);
-      }
-    );
-
-    return () => subscription.unsubscribe();
+    getUserId();
   }, []);
 
   const createTeam = async () => {
@@ -48,18 +39,17 @@ export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
     try {
       setIsCreatingTeam(true);
       
-      // Ensure we have the latest session
-      if (!session) {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (!sessionData.session) {
-          toast.error("You must be logged in to create a team");
-          return;
-        }
-        setSession(sessionData.session);
+      // Get the latest user data to ensure we have current auth
+      const { data, error } = await supabase.auth.getUser();
+      
+      if (error || !data.user) {
+        console.error("Authentication error:", error);
+        toast.error("You must be logged in to create a team");
+        return;
       }
-
-      const userId = session.user.id;
-      console.log("Creating team with user ID:", userId);
+      
+      const currentUserId = data.user.id;
+      console.log("Creating team with user ID:", currentUserId);
 
       // Check for duplicate team name
       const { data: existingTeam, error: checkError } = await supabase
@@ -78,37 +68,37 @@ export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
       }
 
       // Create the team with owner_id
-      const { data, error } = await supabase
+      const { data: teamData, error: createError } = await supabase
         .from("teams")
         .insert([{ 
           name: newTeamName.trim(),
-          owner_id: userId
+          owner_id: currentUserId
         }])
         .select()
         .single();
 
-      if (error) {
-        console.error("Error creating team:", error);
-        ErrorLogger.logError(new Error(error.message), "Failed to create team");
+      if (createError) {
+        console.error("Error creating team:", createError);
+        ErrorLogger.logError(new Error(createError.message), "Failed to create team");
         
         // Provide more specific error messages based on error codes
-        if (error.code === "23505") { // Unique constraint violation
+        if (createError.code === "23505") { // Unique constraint violation
           toast.error("A team with this name already exists");
-        } else if (error.code === "23502") { // Not null violation
+        } else if (createError.code === "23502") { // Not null violation
           toast.error("Missing required fields");
         } else {
-          toast.error(`Failed to create team: ${error.message}`);
+          toast.error(`Failed to create team: ${createError.message}`);
         }
         return;
       }
 
       // Also add the creator as a team member with 'admin' role
-      if (data) {
+      if (teamData) {
         const { error: memberError } = await supabase
           .from("team_members")
           .insert([{
-            team_id: data.id,
-            user_id: userId,
+            team_id: teamData.id,
+            user_id: currentUserId,
             role: 'admin'
           }]);
 

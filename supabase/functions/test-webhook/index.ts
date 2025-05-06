@@ -14,11 +14,38 @@ serve(async (req) => {
 
   try {
     // Parse the request body
-    const { webhookUrl, testPayload } = await req.json()
-    console.log(`Testing webhook URL: ${webhookUrl}`)
+    let reqBody;
+    try {
+      reqBody = await req.json();
+    } catch (parseError) {
+      console.error("Error parsing request body:", parseError);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Invalid request body. Expected JSON.",
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+    
+    const { webhookUrl, testPayload } = reqBody;
+    console.log(`Testing webhook URL: ${webhookUrl}`);
     
     if (!webhookUrl) {
-      throw new Error('Webhook URL is required')
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Webhook URL is required",
+          testedAt: new Date().toISOString()
+        }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     // Create a default test payload if none was provided
