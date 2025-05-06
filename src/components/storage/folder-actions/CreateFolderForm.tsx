@@ -48,15 +48,26 @@ export const CreateFolderForm = ({
       // Create the new folder path by combining current path and folder name
       const newFolderPath = `${currentPath}${sanitizedName}/`;
       
-      // Insert the new folder record
-      const { data, error } = await supabase.from("folders").insert([{ name: folderName  }]).select();
+      // Get the current session to ensure user is authenticated
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        toast.error("You must be logged in to create a folder");
+        return;
+      }
+
+      // Insert the new folder record with user_id
+      const { data, error } = await supabase.from("file_storage").insert([
+        { 
+          file_name: sanitizedName,
+          file_path: newFolderPath,
+          folder_path: currentPath,
+          is_folder: true,
+          user_id: sessionData.session.user.id // Crucial: Add user_id to satisfy RLS
+        }
+      ]).select();
 
       if (error) {
-        toast.error("Failed to create folder: ' + error message);
-                    return;
-      }
-       toast.success('Folder created successfully');             
-        
         // Check for common error types
         if (error.code === '23505') {
           toast.error("A folder with this name already exists");

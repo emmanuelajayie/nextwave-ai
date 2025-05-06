@@ -16,12 +16,47 @@ export const FileStorage = () => {
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    loadFiles();
-  }, [currentPath]);
+    // Set up authentication state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setIsAuthenticated(!!session);
+        if (session) {
+          loadFiles();
+        }
+      }
+    );
+
+    // Check for initial session
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+      if (data.session) {
+        loadFiles();
+      } else {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadFiles();
+    }
+  }, [currentPath, isAuthenticated]);
 
   const loadFiles = async () => {
+    if (!isAuthenticated) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       console.log('Loading files from path:', currentPath);
@@ -59,6 +94,16 @@ export const FileStorage = () => {
     console.log('Navigating to folder:', folderPath);
     setCurrentPath(folderPath);
   };
+
+  if (!isAuthenticated) {
+    return (
+      <Card className="p-6">
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">You must be logged in to view files.</p>
+        </div>
+      </Card>
+    );
+  }
 
   if (isLoading && !isRefreshing) {
     return (

@@ -25,6 +25,14 @@ export const FileUploader = ({
       console.log('Starting file upload:', file.name);
       setIsUploading(true);
       
+      // Get the current session to ensure user is authenticated
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        toast.error("You must be logged in to upload files");
+        return;
+      }
+      
       const filePath = `${currentPath}${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from("user_files")
@@ -39,6 +47,7 @@ export const FileUploader = ({
         size: file.size,
         mime_type: file.type,
         is_folder: false,
+        user_id: sessionData.session.user.id // Add user_id to satisfy RLS
       });
 
       if (dbError) throw dbError;

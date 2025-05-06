@@ -16,6 +16,14 @@ export const FileActions = ({ item, onActionComplete }: FileActionsProps) => {
     try {
       console.log('Deleting item:', item.file_name);
       
+      // Get the current session to ensure user is authenticated
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData.session) {
+        toast.error("You must be logged in to delete files");
+        return;
+      }
+      
       if (!item.is_folder) {
         const { error: storageError } = await supabase.storage
           .from("user_files")
