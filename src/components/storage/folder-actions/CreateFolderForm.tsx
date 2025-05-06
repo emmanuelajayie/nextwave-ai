@@ -49,15 +49,13 @@ export const CreateFolderForm = ({
       const newFolderPath = `${currentPath}${sanitizedName}/`;
       
       // Insert the new folder record
-      const { data, error } = await supabase.from("file_storage").insert({
-        file_name: sanitizedName,
-        file_path: newFolderPath,
-        folder_path: currentPath,
-        is_folder: true,
-      }).select();
+      const { data, error } = await supabase.from("folders").insert([{ name: folderName  }]).select();
 
       if (error) {
-        console.error("Error creating folder:", error);
+        toast.error("Failed to create folder: ' + error message);
+                    return;
+      }
+       toast.success('Folder created successfully');             
         
         // Check for common error types
         if (error.code === '23505') {
