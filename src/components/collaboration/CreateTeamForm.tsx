@@ -24,22 +24,19 @@ export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
     try {
       setIsCreatingTeam(true);
       
-      // Get the current user session with proper error handling
-      const { data, error: authError } = await supabase.auth.getUser();
+      // First, check if the user is authenticated
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      if (authError) {
-        console.error("Authentication error:", authError);
-        toast.error("Authentication error. Please try signing in again.");
-        return;
+      if (sessionError) {
+        throw new Error(`Authentication error: ${sessionError.message}`);
       }
       
-      if (!data.user) {
-        console.error("No user found in session");
-        toast.error("You must be logged in to create a team");
-        return;
+      if (!sessionData.session || !sessionData.session.user) {
+        throw new Error("You must be logged in to create a team");
       }
       
-      const currentUserId = data.user.id;
+      // If we get here, we have a valid user
+      const currentUserId = sessionData.session.user.id;
       console.log("Creating team with user ID:", currentUserId);
 
       // Check for duplicate team name
@@ -105,7 +102,7 @@ export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
     } catch (error: any) {
       console.error("Error creating team:", error);
       ErrorLogger.logError(error, "Failed to process team creation");
-      toast.error("Failed to process team creation");
+      toast.error(error.message || "Failed to process team creation");
     } finally {
       setIsCreatingTeam(false);
     }
