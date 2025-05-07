@@ -42,9 +42,12 @@ export const ScheduledTasks = () => {
   const [cleaningPreference, setCleaningPreference] = useState("automatic");
   const [automaticModeling, setAutomaticModeling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [formChanged, setFormChanged] = useState(false);
+  const [initialValues, setInitialValues] = useState<any>(null);
 
   const { workflows, isLoading, updateWorkflow, isPending, error: workflowError } = useWorkflow();
 
+  // Track workflow errors
   useEffect(() => {
     if (workflowError) {
       setError(workflowError instanceof Error ? workflowError.message : "Failed to load workflows");
@@ -53,6 +56,7 @@ export const ScheduledTasks = () => {
     }
   }, [workflowError]);
 
+  // Load initial values from workflows
   useEffect(() => {
     if (workflows && workflows.length > 0 && workflows[0].config) {
       const config = workflows[0].config;
@@ -86,8 +90,110 @@ export const ScheduledTasks = () => {
         setCleaningPreference(config.dataSources.cleaningPreference || "automatic");
         setAutomaticModeling(config.dataSources.automaticModeling || false);
       }
+
+      // Store initial values to detect changes
+      setInitialValues({
+        analytics: {
+          schedule: config.analytics?.schedule || "",
+          time: config.analytics?.time || "",
+        },
+        reports: {
+          schedule: config.reports?.schedule || "",
+          time: config.reports?.time || "",
+        },
+        workflow: {
+          schedule: config.workflow?.schedule || "",
+          time: config.workflow?.time || "",
+          days: [...(config.workflow?.days || [])],
+        },
+        notifications: {
+          email: config.notifications?.email || false,
+        },
+        dataSources: {
+          crmTypes: [...(config.dataSources?.crmTypes || [])],
+          storagePreference: config.dataSources?.storagePreference || "google_sheets",
+          sortBy: config.dataSources?.sortBy || "date",
+          cleaningPreference: config.dataSources?.cleaningPreference || "automatic",
+          automaticModeling: config.dataSources?.automaticModeling || false,
+        }
+      });
+      
+      // Reset form changed state since we just loaded data
+      setFormChanged(false);
     }
   }, [workflows]);
+
+  // Detect form changes by comparing current values to initial values
+  useEffect(() => {
+    if (!initialValues) return;
+    
+    const currentValues = {
+      analytics: {
+        schedule: analyticsSchedule,
+        time: analyticsTime,
+      },
+      reports: {
+        schedule: reportsSchedule,
+        time: reportsTime,
+      },
+      workflow: {
+        schedule: workflowSchedule,
+        time: workflowTime,
+        days: [...workflowDays],
+      },
+      notifications: {
+        email: emailNotifications,
+      },
+      dataSources: {
+        crmTypes: [...selectedCRMs],
+        storagePreference,
+        sortBy,
+        cleaningPreference,
+        automaticModeling,
+      }
+    };
+    
+    // Deep compare function for nested objects
+    const isEqual = (obj1: any, obj2: any): boolean => {
+      if (obj1 === obj2) return true;
+      if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
+        return obj1 === obj2;
+      }
+      
+      // Handle arrays
+      if (Array.isArray(obj1) && Array.isArray(obj2)) {
+        if (obj1.length !== obj2.length) return false;
+        return obj1.every((val, idx) => isEqual(val, obj2[idx]));
+      }
+      
+      const keys1 = Object.keys(obj1);
+      const keys2 = Object.keys(obj2);
+      
+      if (keys1.length !== keys2.length) return false;
+      
+      return keys1.every(key => keys2.includes(key) && isEqual(obj1[key], obj2[key]));
+    };
+    
+    const hasChanged = !isEqual(currentValues, initialValues);
+    setFormChanged(hasChanged);
+    
+    console.log("Form changed:", hasChanged);
+  }, [
+    initialValues,
+    analyticsSchedule,
+    analyticsTime,
+    reportsSchedule,
+    reportsTime,
+    workflowSchedule,
+    workflowTime,
+    workflowDays,
+    emailNotifications,
+    selectedCRMs,
+    storagePreference,
+    sortBy,
+    cleaningPreference,
+    automaticModeling
+  ]);
 
   // Handle schedule changes
   const handleScheduleChange = (value: string, type: 'analytics' | 'reports' | 'workflow') => {
@@ -149,7 +255,13 @@ export const ScheduledTasks = () => {
         automaticModeling,
       }
     };
-    updateWorkflow(config);
+    
+    updateWorkflow(config).then(() => {
+      // Update initial values after successful save
+      setInitialValues({...config});
+      // Reset the form changed state
+      setFormChanged(false);
+    });
   };
 
   if (isLoading) {
@@ -324,7 +436,7 @@ export const ScheduledTasks = () => {
       <Button 
         className="w-full" 
         onClick={handleSubmit}
-        disabled={isPending || !!error}
+        disabled={isPending || !!error || !formChanged}
       >
         {isPending ? (
           <>
