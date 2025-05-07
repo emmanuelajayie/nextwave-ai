@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UserPlus, Loader2 } from "lucide-react";
@@ -14,21 +14,6 @@ interface CreateTeamFormProps {
 export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
   const [newTeamName, setNewTeamName] = useState("");
   const [isCreatingTeam, setIsCreatingTeam] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Get the current user ID when component mounts
-    const getUserId = async () => {
-      const { data, error } = await supabase.auth.getUser();
-      if (error) {
-        console.error("Error fetching user:", error);
-      } else if (data?.user) {
-        setUserId(data.user.id);
-      }
-    };
-
-    getUserId();
-  }, []);
 
   const createTeam = async () => {
     if (!newTeamName.trim()) {
@@ -39,11 +24,17 @@ export const CreateTeamForm = ({ onTeamCreated }: CreateTeamFormProps) => {
     try {
       setIsCreatingTeam(true);
       
-      // Get the latest user data to ensure we have current auth
-      const { data, error } = await supabase.auth.getUser();
+      // Get the current user session with proper error handling
+      const { data, error: authError } = await supabase.auth.getUser();
       
-      if (error || !data.user) {
-        console.error("Authentication error:", error);
+      if (authError) {
+        console.error("Authentication error:", authError);
+        toast.error("Authentication error. Please try signing in again.");
+        return;
+      }
+      
+      if (!data.user) {
+        console.error("No user found in session");
         toast.error("You must be logged in to create a team");
         return;
       }

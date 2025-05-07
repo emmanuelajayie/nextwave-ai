@@ -40,8 +40,8 @@ export const TeamManagement = () => {
 
     // Get initial session
     const getInitialSession = async () => {
-      const { data } = await supabase.auth.getUser();
-      const hasSession = !!data.user;
+      const { data: { session } } = await supabase.auth.getSession();
+      const hasSession = !!session;
       setIsAuthenticated(hasSession);
       
       if (hasSession) {
@@ -67,6 +67,10 @@ export const TeamManagement = () => {
     setIsLoading(true);
     try {
       console.log("Fetching teams");
+      
+      // Get the current user for logging purposes
+      const { data: userData } = await supabase.auth.getUser();
+      console.log("Current user ID:", userData?.user?.id);
 
       // First, fetch teams data
       const { data: teamsData, error: teamsError } = await supabase
