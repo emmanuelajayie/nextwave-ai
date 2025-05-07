@@ -10,13 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { RefreshCw, Link2Off, Eye, AlertCircle } from "lucide-react";
+import { RefreshCw, Link2Off, Eye, AlertCircle, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import ErrorLogger from "@/utils/errorLogger";
 
 // Define a type for data sources
@@ -47,46 +47,60 @@ const getStatusColor = (status: string | null) => {
 export const DataSources = () => {
   const [sources, setSources] = useState<DataSource[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: user } = useQuery({
-    queryKey: ["user"],
+  // Use useQuery to fetch the authenticated user
+  const { data: authData, isLoading: isAuthLoading } = useQuery({
+    queryKey: ["auth-user"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      return user;
+      const { data, error } = await supabase.auth.getSession();
+      if (error) throw new Error(error.message);
+      return data;
     },
   });
 
   const fetchDataSources = async () => {
-    if (!user) return;
+    // Don't try to fetch if we don't have session data yet
+    if (!authData?.session?.user) {
+      console.log("Skipping data source fetch - no authenticated user");
+      return;
+    }
     
     try {
+      setIsLoading(true);
       setError(null);
-      console.log("Fetching data sources for user:", user.id);
+      const userId = authData.session.user.id;
+      console.log("Fetching data sources for user:", userId);
       
       const { data, error } = await supabase
         .from("data_sources")
         .select("*")
-        .eq("user_id", user.id)
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
         
       if (error) {
         console.error("Error fetching data sources:", error);
-        setError(error.message);
-        throw error;
+        setError(`Failed to load data sources: ${error.message}`);
+        ErrorLogger.logError(new Error(error.message), "Failed to fetch data sources");
+        return;
       }
       
       console.log("Fetched data sources:", data?.length || 0);
       setSources(data || []);
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : "Failed to fetch data sources";
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Failed to fetch data sources";
       console.error("Error in fetchDataSources:", errorMsg);
-      ErrorLogger.logError(error instanceof Error ? error : new Error(errorMsg));
+      setError(errorMsg);
+      ErrorLogger.logError(err instanceof Error ? err : new Error(errorMsg));
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    if (user) {
+    // Only fetch data sources when we have authentication data
+    if (!isAuthLoading && authData?.session) {
       fetchDataSources();
     }
     
@@ -100,27 +114,42 @@ export const DataSources = () => {
     return () => {
       window.removeEventListener("data-source-updated", handleDataSourceUpdate);
     };
-  }, [user]);
+  }, [isAuthLoading, authData]);
 
   const handleRefresh = async (sourceId: string) => {
+    if (!authData?.session?.user) {
+      toast.error("You must be logged in to refresh data sources");
+      return;
+    }
+
     setIsRefreshing(true);
     try {
-      await supabase
+      const { error } = await supabase
         .from("data_sources")
         .update({
           last_sync: new Date().toISOString(),
           status: "Syncing"
         })
-        .eq("id", sourceId);
+        .eq("id", sourceId)
+        .eq("user_id", authData.session.user.id);
+      
+      if (error) {
+        throw new Error(`Failed to refresh data source: ${error.message}`);
+      }
         
       // Simulate syncing process
       setTimeout(async () => {
-        await supabase
+        const { error: updateError } = await supabase
           .from("data_sources")
           .update({
             status: "Connected"
           })
-          .eq("id", sourceId);
+          .eq("id", sourceId)
+          .eq("user_id", authData.session.user.id);
+          
+        if (updateError) {
+          console.error("Error updating data source status:", updateError);
+        }
           
         fetchDataSources();
       }, 2000);
@@ -128,7 +157,8 @@ export const DataSources = () => {
       toast.success("Refreshing data source");
     } catch (error) {
       console.error("Error refreshing data source:", error);
-      toast.error("Failed to refresh data source");
+      toast.error(error instanceof Error ? error.message : "Failed to refresh data source");
+      ErrorLogger.logError(error instanceof Error ? error : new Error("Failed to refresh data source"));
     } finally {
       setIsRefreshing(false);
     }
@@ -140,19 +170,59 @@ export const DataSources = () => {
   };
 
   const handleDisconnect = async (sourceId: string) => {
+    if (!authData?.session?.user) {
+      toast.error("You must be logged in to disconnect data sources");
+      return;
+    }
+
     try {
-      await supabase
+      const { error } = await supabase
         .from("data_sources")
         .delete()
-        .eq("id", sourceId);
+        .eq("id", sourceId)
+        .eq("user_id", authData.session.user.id);
+        
+      if (error) {
+        throw new Error(`Failed to disconnect data source: ${error.message}`);
+      }
         
       fetchDataSources();
       toast.success("Data source disconnected");
     } catch (error) {
       console.error("Error disconnecting data source:", error);
-      toast.error("Failed to disconnect data source");
+      toast.error(error instanceof Error ? error.message : "Failed to disconnect data source");
+      ErrorLogger.logError(error instanceof Error ? error : new Error("Failed to disconnect data source"));
     }
   };
+
+  // If we're still loading auth data, show a loading indicator
+  if (isAuthLoading) {
+    return (
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold mb-4">Connected Data Sources</h2>
+        <div className="flex justify-center items-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Checking authentication...</span>
+        </div>
+      </Card>
+    );
+  }
+
+  // If we're not authenticated, show an error
+  if (!authData?.session) {
+    return (
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold mb-4">Connected Data Sources</h2>
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Authentication Required</AlertTitle>
+          <AlertDescription>
+            You must be logged in to view your data sources.
+          </AlertDescription>
+        </Alert>
+      </Card>
+    );
+  }
 
   // If no custom sources yet, show the default mock data
   const displaySources = sources.length > 0 ? sources : [
@@ -206,66 +276,74 @@ export const DataSources = () => {
       {error && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Error</AlertTitle>
           <AlertDescription>
             {error}
           </AlertDescription>
         </Alert>
       )}
       
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Name</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Last Sync</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {displaySources.map((source) => (
-            <TableRow key={source.id}>
-              <TableCell className="font-medium">{source.name}</TableCell>
-              <TableCell>{source.type}</TableCell>
-              <TableCell>{formatLastSync(source.last_sync)}</TableCell>
-              <TableCell>
-                <Badge
-                  variant="secondary"
-                  className={getStatusColor(source.status)}
-                >
-                  {source.status || "Unknown"}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleRefresh(source.id)}
-                    disabled={isRefreshing}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleView(source.id)}
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDisconnect(source.id)}
-                  >
-                    <Link2Off className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
+      {isLoading ? (
+        <div className="flex justify-center items-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Loading data sources...</span>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Last Sync</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {displaySources.map((source) => (
+              <TableRow key={source.id}>
+                <TableCell className="font-medium">{source.name}</TableCell>
+                <TableCell>{source.type}</TableCell>
+                <TableCell>{formatLastSync(source.last_sync)}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="secondary"
+                    className={getStatusColor(source.status)}
+                  >
+                    {source.status || "Unknown"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRefresh(source.id)}
+                      disabled={isRefreshing}
+                    >
+                      <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleView(source.id)}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDisconnect(source.id)}
+                    >
+                      <Link2Off className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </Card>
   );
 };

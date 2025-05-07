@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import ErrorLogger from "@/utils/errorLogger";
 
 const Data = () => {
   const [searchParams] = useSearchParams();
@@ -21,33 +22,33 @@ const Data = () => {
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // First check authentication status
   useEffect(() => {
-    // Check authentication status first
     const checkAuth = async () => {
       try {
         setIsLoading(true);
+        
+        console.log("Checking authentication on Data Collection page");
+        
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          console.error("Authentication error:", error);
-          setError("Authentication error. Please try signing in again.");
-          return;
+          throw new Error(`Authentication error: ${error.message}`);
         }
         
-        setIsAuthenticated(!!data.session);
+        const isAuthed = !!data.session;
+        setIsAuthenticated(isAuthed);
         
-        // Only proceed if the user is authenticated
-        if (!data.session) {
-          console.log("User not authenticated on Data Collection page");
+        if (!isAuthed) {
           setError("You must be logged in to access this page");
-          return;
+        } else {
+          console.log("User authenticated on Data Collection page");
         }
-        
-        console.log("User authenticated on Data Collection page");
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
         console.error("Error checking authentication:", errorMessage);
         setError(errorMessage);
+        ErrorLogger.logError(err instanceof Error ? err : new Error(errorMessage), "Authentication check failed");
       } finally {
         setIsLoading(false);
       }
@@ -56,8 +57,8 @@ const Data = () => {
     checkAuth();
   }, []);
 
+  // Handle OAuth callback params
   useEffect(() => {
-    // Handle OAuth callback params
     try {
       const oauthSuccess = searchParams.get("oauth_success");
       const oauthError = searchParams.get("oauth_error");
@@ -73,6 +74,7 @@ const Data = () => {
       const errorMessage = err instanceof Error ? err.message : "Error processing OAuth response";
       console.error("OAuth callback error:", errorMessage);
       toast.error(errorMessage);
+      ErrorLogger.logError(err instanceof Error ? err : new Error(errorMessage), "OAuth callback processing failed");
     }
   }, [searchParams]);
 
@@ -81,6 +83,7 @@ const Data = () => {
       <MainLayout>
         <div className="flex items-center justify-center min-h-[50vh]">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2">Checking authentication...</span>
         </div>
       </MainLayout>
     );
