@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -126,9 +125,13 @@ export const ScheduledTasks = () => {
     }
   }, [workflows]);
 
-  // Detect form changes by comparing current values to initial values
+  // Improved form change detection 
   useEffect(() => {
-    if (!initialValues) return;
+    if (!initialValues) {
+      // If there are no initial values yet, mark the form as unchanged
+      setFormChanged(false);
+      return;
+    }
     
     const currentValues = {
       analytics: {
@@ -156,31 +159,16 @@ export const ScheduledTasks = () => {
       }
     };
     
-    // Deep compare function for nested objects
-    const isEqual = (obj1: any, obj2: any): boolean => {
-      if (obj1 === obj2) return true;
-      if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
-        return obj1 === obj2;
-      }
-      
-      // Handle arrays
-      if (Array.isArray(obj1) && Array.isArray(obj2)) {
-        if (obj1.length !== obj2.length) return false;
-        return obj1.every((val, idx) => isEqual(val, obj2[idx]));
-      }
-      
-      const keys1 = Object.keys(obj1);
-      const keys2 = Object.keys(obj2);
-      
-      if (keys1.length !== keys2.length) return false;
-      
-      return keys1.every(key => keys2.includes(key) && isEqual(obj1[key], obj2[key]));
-    };
+    // Force the form to be changed if there are any differences at all
+    const hasChanged = JSON.stringify(currentValues) !== JSON.stringify(initialValues);
     
-    const hasChanged = !isEqual(currentValues, initialValues);
+    console.log("Form changed check:", { 
+      hasChanged, 
+      current: JSON.stringify(currentValues), 
+      initial: JSON.stringify(initialValues)
+    });
+    
     setFormChanged(hasChanged);
-    
-    console.log("Form changed:", hasChanged);
   }, [
     initialValues,
     analyticsSchedule,
@@ -233,6 +221,12 @@ export const ScheduledTasks = () => {
   };
 
   const handleSubmit = () => {
+    // If there are no changes, don't submit
+    if (!formChanged) {
+      toast.info("No changes to save");
+      return;
+    }
+
     const config = {
       analytics: {
         schedule: analyticsSchedule,
@@ -259,11 +253,14 @@ export const ScheduledTasks = () => {
       }
     };
     
+    // Call the updateWorkflow function which returns void, not a promise
     updateWorkflow(config);
-    toast.success("Settings saved successfully!");
+    
+    // We'll rely on the useEffect below to handle the success state
+    console.log("Settings submitted");
   };
 
-  // Add a useEffect to track the isPending state and update UI accordingly
+  // Effect for handling successful updates
   useEffect(() => {
     if (!isPending && !workflowError && formChanged) {
       // This runs after a successful update
@@ -296,6 +293,9 @@ export const ScheduledTasks = () => {
       // Reset form changed state
       setFormChanged(false);
       setSaveSuccess(true);
+      
+      // Show success toast
+      toast.success("Settings saved successfully!");
       
       // Hide success message after 3 seconds
       setTimeout(() => {
