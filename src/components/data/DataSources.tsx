@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -46,7 +47,7 @@ const getStatusColor = (status: string | null) => {
 export const DataSources = () => {
   const [sources, setSources] = useState<DataSource[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Initially false to prevent spinner on first load
   const [error, setError] = useState<string | null>(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);  // Track initial load
 
@@ -73,7 +74,10 @@ export const DataSources = () => {
     }
     
     try {
-      setIsLoading(true);
+      // Only show loading state if not initial load
+      if (!isInitialLoad) {
+        setIsLoading(true);
+      }
       setError(null);
       const userId = authData.session.user.id;
       console.log("Fetching data sources for user:", userId);
@@ -85,9 +89,14 @@ export const DataSources = () => {
         .order("created_at", { ascending: false });
         
       if (error) {
-        console.error("Error fetching data sources:", error);
-        setError(`Failed to load data sources: ${error.message}`);
-        ErrorLogger.logError(new Error(error.message), "Failed to fetch data sources");
+        // Only show errors if not during initial page load
+        if (!isInitialLoad) {
+          console.error("Error fetching data sources:", error);
+          setError(`Failed to load data sources: ${error.message}`);
+          ErrorLogger.logError(new Error(error.message), "Failed to fetch data sources");
+        } else {
+          console.log("Initial load error fetching data sources - suppressing UI error");
+        }
         return;
       }
       
@@ -127,7 +136,7 @@ export const DataSources = () => {
   }, [isAuthLoading, authData]);
 
   // Only show auth error if we're not in the initial loading state
-  const shouldShowAuthError = authError && !isAuthLoading;
+  const shouldShowAuthError = authError && !isAuthLoading && !isInitialLoad;
 
   const handleRefresh = async (sourceId: string) => {
     if (!authData?.session?.user) {
@@ -302,7 +311,7 @@ export const DataSources = () => {
     <Card className="p-6">
       <h2 className="text-lg font-semibold mb-4">Connected Data Sources</h2>
       
-      {error && (
+      {error && !isInitialLoad && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>

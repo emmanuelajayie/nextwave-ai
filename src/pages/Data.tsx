@@ -30,7 +30,12 @@ const Data = () => {
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
-          throw new Error(`Authentication error: ${error.message}`);
+          console.error("Authentication session check error:", error.message);
+          // Don't throw error on initial page load, just return null session
+          return { 
+            session: null, 
+            isAuthenticated: false 
+          };
         }
         
         return { 
@@ -40,16 +45,14 @@ const Data = () => {
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
         console.error("Error checking authentication:", errorMessage);
-        ErrorLogger.logError(err instanceof Error ? err : new Error(errorMessage), "Authentication check failed");
-        setError(errorMessage);
-        
+        // Don't log errors during initial load to avoid error popups
         return { 
           session: null, 
           isAuthenticated: false 
         };
       }
     },
-    retry: 1, // Only retry once to avoid excessive error messages
+    retry: false, // Don't retry to avoid multiple error messages
     refetchOnWindowFocus: false, // Prevent refetching when window regains focus
   });
 
@@ -71,7 +74,6 @@ const Data = () => {
         const errorMessage = err instanceof Error ? err.message : "Error processing OAuth response";
         console.error("OAuth callback error:", errorMessage);
         // Don't show toast here - only log it to prevent initial load errors
-        ErrorLogger.logError(err instanceof Error ? err : new Error(errorMessage), "OAuth callback processing failed");
       }
     }, 1000); // Delay toast notifications
     

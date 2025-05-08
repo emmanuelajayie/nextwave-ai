@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -8,7 +9,8 @@ import {
   AlertCircle, 
   Database, 
   FileSpreadsheet,
-  Calendar
+  Calendar,
+  CheckCircle
 } from "lucide-react";
 import {
   Select,
@@ -25,6 +27,7 @@ import { useWorkflow } from "@/hooks/useWorkflow";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 
 export const ScheduledTasks = () => {
   const [emailNotifications, setEmailNotifications] = useState(false);
@@ -43,6 +46,7 @@ export const ScheduledTasks = () => {
   const [error, setError] = useState<string | null>(null);
   const [formChanged, setFormChanged] = useState(false);
   const [initialValues, setInitialValues] = useState<any>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const { workflows, isLoading, updateWorkflow, isPending, error: workflowError } = useWorkflow();
 
@@ -256,6 +260,7 @@ export const ScheduledTasks = () => {
     };
     
     updateWorkflow(config);
+    toast.success("Settings saved successfully!");
   };
 
   // Add a useEffect to track the isPending state and update UI accordingly
@@ -290,8 +295,17 @@ export const ScheduledTasks = () => {
       
       // Reset form changed state
       setFormChanged(false);
+      setSaveSuccess(true);
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        setSaveSuccess(false);
+      }, 3000);
     }
-  }, [isPending, workflowError]);
+  }, [isPending, workflowError, formChanged, analyticsSchedule, analyticsTime, 
+      reportsSchedule, reportsTime, workflowSchedule, workflowTime, 
+      workflowDays, emailNotifications, selectedCRMs, 
+      storagePreference, sortBy, cleaningPreference, automaticModeling]);
 
   if (isLoading) {
     return (
@@ -312,6 +326,15 @@ export const ScheduledTasks = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             {error}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {saveSuccess && (
+        <Alert variant="success" className="mb-4">
+          <CheckCircle className="h-4 w-4" />
+          <AlertDescription>
+            Settings saved successfully!
           </AlertDescription>
         </Alert>
       )}
