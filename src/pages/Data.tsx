@@ -15,67 +15,67 @@ import { Loader2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import ErrorLogger from "@/utils/errorLogger";
+import { useQuery } from "@tanstack/react-query";
 
 const Data = () => {
   const [searchParams] = useSearchParams();
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // First check authentication status
-  useEffect(() => {
-    const checkAuth = async () => {
+  // Use React Query for session management for better error handling and caching
+  const { data: sessionData, isLoading } = useQuery({
+    queryKey: ["auth-session"],
+    queryFn: async () => {
       try {
-        setIsLoading(true);
-        
         console.log("Checking authentication on Data Collection page");
-        
         const { data, error } = await supabase.auth.getSession();
         
         if (error) {
           throw new Error(`Authentication error: ${error.message}`);
         }
         
-        const isAuthed = !!data.session;
-        setIsAuthenticated(isAuthed);
-        
-        if (!isAuthed) {
-          setError("You must be logged in to access this page");
-        } else {
-          console.log("User authenticated on Data Collection page");
-        }
+        return { 
+          session: data.session, 
+          isAuthenticated: !!data.session 
+        };
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred";
         console.error("Error checking authentication:", errorMessage);
-        setError(errorMessage);
         ErrorLogger.logError(err instanceof Error ? err : new Error(errorMessage), "Authentication check failed");
-      } finally {
-        setIsLoading(false);
+        setError(errorMessage);
+        
+        return { 
+          session: null, 
+          isAuthenticated: false 
+        };
       }
-    };
-    
-    checkAuth();
-  }, []);
+    },
+    retry: 1, // Only retry once to avoid excessive error messages
+    refetchOnWindowFocus: false, // Prevent refetching when window regains focus
+  });
 
-  // Handle OAuth callback params
+  // Handle OAuth callback params - delay showing toast errors to prevent initial load errors
   useEffect(() => {
-    try {
-      const oauthSuccess = searchParams.get("oauth_success");
-      const oauthError = searchParams.get("oauth_error");
-      const crmType = searchParams.get("crm_type");
-
-      if (oauthSuccess === "true" && crmType) {
-        const formattedCrmType = crmType.charAt(0).toUpperCase() + crmType.slice(1).replace('_', ' ');
-        toast.success(`Successfully connected to ${formattedCrmType}`);
-      } else if (oauthError) {
-        toast.error(`Failed to connect: ${oauthError}`);
+    const timeoutId = setTimeout(() => {
+      try {
+        const oauthSuccess = searchParams.get("oauth_success");
+        const oauthError = searchParams.get("oauth_error");
+        const crmType = searchParams.get("crm_type");
+  
+        if (oauthSuccess === "true" && crmType) {
+          const formattedCrmType = crmType.charAt(0).toUpperCase() + crmType.slice(1).replace('_', ' ');
+          toast.success(`Successfully connected to ${formattedCrmType}`);
+        } else if (oauthError) {
+          toast.error(`Failed to connect: ${oauthError}`);
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : "Error processing OAuth response";
+        console.error("OAuth callback error:", errorMessage);
+        // Don't show toast here - only log it to prevent initial load errors
+        ErrorLogger.logError(err instanceof Error ? err : new Error(errorMessage), "OAuth callback processing failed");
       }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Error processing OAuth response";
-      console.error("OAuth callback error:", errorMessage);
-      toast.error(errorMessage);
-      ErrorLogger.logError(err instanceof Error ? err : new Error(errorMessage), "OAuth callback processing failed");
-    }
+    }, 1000); // Delay toast notifications
+    
+    return () => clearTimeout(timeoutId);
   }, [searchParams]);
 
   if (isLoading) {
@@ -106,7 +106,7 @@ const Data = () => {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!sessionData?.isAuthenticated) {
     return (
       <MainLayout>
         <Alert variant="warning" className="mb-6">

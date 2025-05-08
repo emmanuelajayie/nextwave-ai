@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -49,14 +48,20 @@ export const DataSources = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);  // Track initial load
 
   // Use useQuery to fetch the authenticated user
-  const { data: authData, isLoading: isAuthLoading } = useQuery({
+  const { data: authData, isLoading: isAuthLoading, error: authError } = useQuery({
     queryKey: ["auth-user"],
     queryFn: async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error) throw new Error(error.message);
-      return data;
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        return data;
+      } catch (err) {
+        console.error("Failed to get auth session:", err);
+        return { session: null };
+      }
     },
   });
 
@@ -91,10 +96,15 @@ export const DataSources = () => {
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to fetch data sources";
       console.error("Error in fetchDataSources:", errorMsg);
-      setError(errorMsg);
-      ErrorLogger.logError(err instanceof Error ? err : new Error(errorMsg));
+      
+      // Only show error toast if not initial load
+      if (!isInitialLoad) {
+        setError(errorMsg);
+        ErrorLogger.logError(err instanceof Error ? err : new Error(errorMsg));
+      }
     } finally {
       setIsLoading(false);
+      setIsInitialLoad(false);
     }
   };
 
@@ -115,6 +125,9 @@ export const DataSources = () => {
       window.removeEventListener("data-source-updated", handleDataSourceUpdate);
     };
   }, [isAuthLoading, authData]);
+
+  // Only show auth error if we're not in the initial loading state
+  const shouldShowAuthError = authError && !isAuthLoading;
 
   const handleRefresh = async (sourceId: string) => {
     if (!authData?.session?.user) {
@@ -195,7 +208,7 @@ export const DataSources = () => {
     }
   };
 
-  // If we're still loading auth data, show a loading indicator
+  // Only show loading state during initial load
   if (isAuthLoading) {
     return (
       <Card className="p-6">
@@ -208,12 +221,28 @@ export const DataSources = () => {
     );
   }
 
-  // If we're not authenticated, show an error
+  // If there's an authentication error, we should handle it gracefully
+  if (shouldShowAuthError) {
+    return (
+      <Card className="p-6">
+        <h2 className="text-lg font-semibold mb-4">Connected Data Sources</h2>
+        <Alert variant="warning" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Authentication Issue</AlertTitle>
+          <AlertDescription>
+            There was a problem verifying your authentication. Please refresh the page or try signing in again.
+          </AlertDescription>
+        </Alert>
+      </Card>
+    );
+  }
+
+  // If we're not authenticated, show a user-friendly message
   if (!authData?.session) {
     return (
       <Card className="p-6">
         <h2 className="text-lg font-semibold mb-4">Connected Data Sources</h2>
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="warning" className="mb-4">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Authentication Required</AlertTitle>
           <AlertDescription>

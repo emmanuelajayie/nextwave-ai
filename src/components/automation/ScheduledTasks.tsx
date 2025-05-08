@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -256,13 +255,46 @@ export const ScheduledTasks = () => {
       }
     };
     
-    updateWorkflow(config).then(() => {
-      // Update initial values after successful save
-      setInitialValues({...config});
-      // Reset the form changed state
-      setFormChanged(false);
-    });
+    updateWorkflow(config);
+    
+    // Update initial values after successful save - we'll do this in the useEffect that watches workflowError
+    // Reset the form changed state - we'll also do this in the useEffect
   };
+
+  // Add a useEffect to track the isPending state and update UI accordingly
+  useEffect(() => {
+    if (!isPending && !workflowError && formChanged) {
+      // This runs after a successful update
+      setInitialValues({
+        analytics: {
+          schedule: analyticsSchedule,
+          time: analyticsTime,
+        },
+        reports: {
+          schedule: reportsSchedule,
+          time: reportsTime,
+        },
+        workflow: {
+          schedule: workflowSchedule,
+          time: workflowTime,
+          days: [...workflowDays],
+        },
+        notifications: {
+          email: emailNotifications,
+        },
+        dataSources: {
+          crmTypes: [...selectedCRMs],
+          storagePreference,
+          sortBy,
+          cleaningPreference,
+          automaticModeling,
+        }
+      });
+      
+      // Reset form changed state
+      setFormChanged(false);
+    }
+  }, [isPending, workflowError]);
 
   if (isLoading) {
     return (
