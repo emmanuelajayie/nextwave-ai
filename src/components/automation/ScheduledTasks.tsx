@@ -256,9 +256,6 @@ export const ScheduledTasks = () => {
     };
     
     updateWorkflow(config);
-    
-    // Update initial values after successful save - we'll do this in the useEffect that watches workflowError
-    // Reset the form changed state - we'll also do this in the useEffect
   };
 
   // Add a useEffect to track the isPending state and update UI accordingly
