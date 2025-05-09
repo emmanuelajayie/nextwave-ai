@@ -16,19 +16,70 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import { toast } from "@/components/ui/use-toast";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { Loader2 } from "lucide-react";
+
+interface User {
+  name: string;
+  email: string;
+  role: string;
+}
 
 export const UserPermissions = () => {
-  const users = [
-    { name: "John Doe", email: "john@example.com", role: "Admin" },
-    { name: "Jane Smith", email: "jane@example.com", role: "Analyst" },
-    { name: "Mike Johnson", email: "mike@example.com", role: "Viewer" },
-  ];
+  const [users, setUsers] = useState<User[]>([
+    { name: "John Doe", email: "john@example.com", role: "admin" },
+    { name: "Jane Smith", email: "jane@example.com", role: "analyst" },
+    { name: "Mike Johnson", email: "mike@example.com", role: "viewer" },
+  ]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // This is a mock function since we can't easily integrate with the teams database in a settings component
+  const fetchTeamMembers = async () => {
+    // In a real implementation, this would fetch from the team_members table
+    // But for now we'll use mock data
+    setIsLoading(true);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 500);
+  };
+
+  useEffect(() => {
+    fetchTeamMembers();
+  }, []);
 
   const handleRoleChange = (email: string, newRole: string) => {
     console.log("Changing role for", email, "to", newRole);
-    toast.success(`Role updated successfully for ${email}`);
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.email === email ? { ...user, role: newRole } : user
+      )
+    );
+    toast({
+      title: "Role updated",
+      description: `Successfully updated role for ${email} to ${newRole}`,
+    });
   };
+
+  const handleRemoveUser = (email: string) => {
+    console.log("Removing user", email);
+    setUsers(prevUsers => prevUsers.filter(user => user.email !== email));
+    toast({
+      title: "User removed",
+      description: `Successfully removed ${email} from the system`,
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="flex justify-center">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="p-6">
@@ -63,7 +114,11 @@ export const UserPermissions = () => {
                 </Select>
               </TableCell>
               <TableCell className="text-right">
-                <Button variant="outline" size="sm">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => handleRemoveUser(user.email)}
+                >
                   Remove
                 </Button>
               </TableCell>

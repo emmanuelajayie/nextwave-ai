@@ -1,10 +1,7 @@
 
-project_id = "zpxciicizzdyxqqnixra"
-[functions.sync-crm-data]
+[functions]
+[functions.get-user-email]
 verify_jwt = true
 
-[functions.crm-oauth-callback]
-verify_jwt = false
-
-[functions.crm-oauth-initialize]
-verify_jwt = false
+[functions.invite-team-member]
+verify_jwt = true
