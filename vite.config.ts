@@ -22,4 +22,10 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Ensure sourcemaps are generated for easier debugging
+    sourcemap: true,
+    // Optimize build output
+    minify: 'terser',
+  }
 }));

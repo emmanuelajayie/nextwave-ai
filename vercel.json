@@ -40,5 +40,13 @@
       "src": "/payment/callback",
       "dest": "/"
     }
-  ]
+  ],
+  "github": {
+    "silent": false
+  },
+  "build": {
+    "env": {
+      "VITE_LOVABLE_IDENTITY": "lovablebot.dev"
+    }
+  }
 }
