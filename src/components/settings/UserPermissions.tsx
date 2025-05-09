@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Loader2 } from "lucide-react";
@@ -34,6 +34,7 @@ export const UserPermissions = () => {
     { name: "Mike Johnson", email: "mike@example.com", role: "viewer" },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
   // This is a mock function since we can't easily integrate with the teams database in a settings component
   const fetchTeamMembers = async () => {
