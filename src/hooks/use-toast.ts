@@ -1,6 +1,10 @@
 
-// This file is needed to resolve import errors from "@/components/ui/use-toast"
-// Re-export from the correct location
-import { useToast, toast } from "@/components/ui/use-toast";
+// This file is just a direct export of the toast implementation
+// to maintain compatibility with existing imports
+import {
+  useToast as useToastImpl,
+  toast as toastImpl
+} from "@/components/ui/use-toast";
 
-export { useToast, toast };
+export const useToast = useToastImpl;
+export const toast = toastImpl;
