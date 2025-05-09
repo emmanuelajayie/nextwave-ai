@@ -2,9 +2,8 @@
 // This file is just a direct export of the toast implementation
 // to maintain compatibility with existing imports
 import {
-  useToast as useToastImpl,
-  toast as toastImpl
-} from "@/components/ui/use-toast";
+  useToast,
+  toast
+} from "@/components/ui/use-toast.tsx";
 
-export const useToast = useToastImpl;
-export const toast = toastImpl;
+export { useToast, toast };
