@@ -1,4 +1,6 @@
 
+// This Edge Function retrieves a user's email from the auth.users table
+// It's needed because we can't directly query auth.users from the client
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
@@ -15,7 +17,6 @@ serve(async (req) => {
   
   try {
     const supabaseClient = createClient(
-      // Get these from environment variables
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
       {
@@ -23,7 +24,9 @@ serve(async (req) => {
       }
     );
     
-    const { userId } = await req.json();
+    // Get user ID from query parameters
+    const url = new URL(req.url);
+    const userId = url.searchParams.get('user_id');
     
     if (!userId) {
       return new Response(
@@ -32,20 +35,29 @@ serve(async (req) => {
       );
     }
     
-    // Use admin powers to get user info
-    const { data, error } = await supabaseClient.auth.admin.getUserById(userId);
+    // Use the service role to query the auth schema
+    const { data: userData, error: userError } = await supabaseClient.auth.admin.getUserById(userId);
     
-    if (error) {
-      console.error("Error fetching user:", error);
+    if (userError) {
+      console.error("Error fetching user:", userError);
       return new Response(
-        JSON.stringify({ error: error.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        JSON.stringify({ error: 'Error fetching user data' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
     
-    // Return just the email (no sensitive info)
+    if (!userData || !userData.user) {
+      return new Response(
+        JSON.stringify({ error: 'User not found' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+    
     return new Response(
-      JSON.stringify({ email: data.user?.email }),
+      JSON.stringify({ 
+        id: userData.user.id,
+        email: userData.user.email 
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   } catch (error) {
