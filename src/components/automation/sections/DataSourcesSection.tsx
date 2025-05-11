@@ -38,6 +38,7 @@ export const DataSourcesSection = ({
   onAutomaticModelingChange,
 }: DataSourcesSectionProps) => {
   const handleCRMSelection = (crm: string) => {
+    console.log("CRM selection changed:", crm);
     onCRMSelection(crm);
     toast.success(`CRM ${selectedCRMs.includes(crm) ? 'removed' : 'added'}: ${crm}`);
   };
@@ -74,6 +75,7 @@ export const DataSourcesSection = ({
           <Select 
             value={storagePreference} 
             onValueChange={(value) => {
+              console.log("Storage preference changed to:", value);
               onStoragePreferenceChange(value);
               toast.success(`Storage preference set to ${value}`);
             }}
@@ -95,6 +97,7 @@ export const DataSourcesSection = ({
           <Select 
             value={sortBy} 
             onValueChange={(value) => {
+              console.log("Sort by changed to:", value);
               onSortByChange(value);
               toast.success(`Sort preference set to ${value}`);
             }}
@@ -127,6 +130,7 @@ export const DataSourcesSection = ({
         <Select 
           value={cleaningPreference} 
           onValueChange={(value) => {
+            console.log("Cleaning preference changed to:", value);
             onCleaningPreferenceChange(value);
             toast.success(`Cleaning preference set to ${value}`);
           }}
@@ -152,6 +156,7 @@ export const DataSourcesSection = ({
           <Switch
             checked={automaticModeling}
             onCheckedChange={(value) => {
+              console.log("Automatic modeling changed to:", value);
               onAutomaticModelingChange(value);
               toast.success(`Automatic modeling ${value ? 'enabled' : 'disabled'}`);
             }}

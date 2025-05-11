@@ -62,67 +62,74 @@ export const useScheduledTasksForm = () => {
   // Load initial values from workflows
   useEffect(() => {
     if (workflows && workflows.length > 0 && workflows[0].config) {
-      const config = workflows[0].config;
-      
-      // Set general workflow settings
-      if (config.analytics) {
-        setAnalyticsSchedule(config.analytics.schedule || "");
-        setAnalyticsTime(config.analytics.time || "");
-      }
-      
-      if (config.reports) {
-        setReportsSchedule(config.reports.schedule || "");
-        setReportsTime(config.reports.time || "");
-      }
-      
-      if (config.workflow) {
-        setWorkflowSchedule(config.workflow.schedule || "");
-        setWorkflowTime(config.workflow.time || "");
-        setWorkflowDays(config.workflow.days || []);
-      }
-      
-      if (config.notifications) {
-        setEmailNotifications(config.notifications.email || false);
-      }
-      
-      // Set data source preferences
-      if (config.dataSources) {
-        setSelectedCRMs(config.dataSources.crmTypes || []);
-        setStoragePreference(config.dataSources.storagePreference || "google_sheets");
-        setSortBy(config.dataSources.sortBy || "date");
-        setCleaningPreference(config.dataSources.cleaningPreference || "automatic");
-        setAutomaticModeling(config.dataSources.automaticModeling || false);
-      }
-
-      // Store initial values to detect changes
-      setInitialValues({
-        analytics: {
-          schedule: config.analytics?.schedule || "",
-          time: config.analytics?.time || "",
-        },
-        reports: {
-          schedule: config.reports?.schedule || "",
-          time: config.reports?.time || "",
-        },
-        workflow: {
-          schedule: config.workflow?.schedule || "",
-          time: config.workflow?.time || "",
-          days: [...(config.workflow?.days || [])],
-        },
-        notifications: {
-          email: config.notifications?.email || false,
-        },
-        dataSources: {
-          crmTypes: [...(config.dataSources?.crmTypes || [])],
-          storagePreference: config.dataSources?.storagePreference || "google_sheets",
-          sortBy: config.dataSources?.sortBy || "date",
-          cleaningPreference: config.dataSources?.cleaningPreference || "automatic",
-          automaticModeling: config.dataSources?.automaticModeling || false,
+      try {
+        const config = workflows[0].config;
+        console.log("Loaded workflow config:", config);
+        
+        // Set general workflow settings
+        if (config.analytics) {
+          setAnalyticsSchedule(config.analytics.schedule || "");
+          setAnalyticsTime(config.analytics.time || "");
         }
-      });
-      
-      // Reset form changed state since we just loaded data
-      setFormChanged(false);
+        
+        if (config.reports) {
+          setReportsSchedule(config.reports.schedule || "");
+          setReportsTime(config.reports.time || "");
+        }
+        
+        if (config.workflow) {
+          setWorkflowSchedule(config.workflow.schedule || "");
+          setWorkflowTime(config.workflow.time || "");
+          setWorkflowDays(config.workflow.days || []);
+        }
+        
+        if (config.notifications) {
+          setEmailNotifications(config.notifications.email || false);
+        }
+        
+        // Set data source preferences
+        if (config.dataSources) {
+          setSelectedCRMs(config.dataSources.crmTypes || []);
+          setStoragePreference(config.dataSources.storagePreference || "google_sheets");
+          setSortBy(config.dataSources.sortBy || "date");
+          setCleaningPreference(config.dataSources.cleaningPreference || "automatic");
+          setAutomaticModeling(config.dataSources.automaticModeling || false);
+        }
+
+        // Store initial values to detect changes
+        setInitialValues({
+          analytics: {
+            schedule: config.analytics?.schedule || "",
+            time: config.analytics?.time || "",
+          },
+          reports: {
+            schedule: config.reports?.schedule || "",
+            time: config.reports?.time || "",
+          },
+          workflow: {
+            schedule: config.workflow?.schedule || "",
+            time: config.workflow?.time || "",
+            days: [...(config.workflow?.days || [])],
+          },
+          notifications: {
+            email: config.notifications?.email || false,
+          },
+          dataSources: {
+            crmTypes: [...(config.dataSources?.crmTypes || [])],
+            storagePreference: config.dataSources?.storagePreference || "google_sheets",
+            sortBy: config.dataSources?.sortBy || "date",
+            cleaningPreference: config.dataSources?.cleaningPreference || "automatic",
+            automaticModeling: config.dataSources?.automaticModeling || false,
+          }
+        });
+        
+        // Reset form changed state since we just loaded data
+        setFormChanged(false);
+        console.log("Form state reset after loading initial values");
+      } catch (error) {
+        console.error("Error parsing workflow config:", error);
+        setError("Failed to load workflow configuration");
+      }
     }
   }, [workflows]);
 
@@ -133,7 +140,15 @@ export const useScheduledTasksForm = () => {
     const hasWorkflowConfig = workflowSchedule && workflowTime && 
       (workflowSchedule !== 'custom' || (workflowSchedule === 'custom' && workflowDays.length > 0));
     
-    return hasAnalyticsConfig || hasReportsConfig || hasWorkflowConfig;
+    const isValid = hasAnalyticsConfig || hasReportsConfig || hasWorkflowConfig;
+    console.log("Schedule config validation:", { 
+      isValid,
+      hasAnalyticsConfig,
+      hasReportsConfig,
+      hasWorkflowConfig 
+    });
+    
+    return isValid;
   };
 
   // Monitor form changes
@@ -169,14 +184,22 @@ export const useScheduledTasksForm = () => {
       }
     };
     
+    // Ensure deep comparison by converting to JSON strings
+    const initialJSON = JSON.stringify(initialValues);
+    const currentJSON = JSON.stringify(currentValues);
+    
     // Check if any values have changed from initial state
-    const hasChanged = JSON.stringify(currentValues) !== JSON.stringify(initialValues);
+    const hasChanged = initialJSON !== currentJSON;
     
     console.log("Form changed check:", { 
       hasChanged, 
-      currentValues, 
-      initialValues,
-      validSchedule: hasValidScheduleConfig() 
+      hasValidConfig: hasValidScheduleConfig(),
+      analyticsTime,
+      analyticsSchedule,
+      reportsTime,
+      reportsSchedule,
+      workflowTime,
+      workflowSchedule
     });
     
     setFormChanged(hasChanged);
@@ -199,6 +222,7 @@ export const useScheduledTasksForm = () => {
 
   // Handle day selection for workflow
   const handleDaySelection = (day: string) => {
+    console.log("Day selection changed:", day);
     setWorkflowDays(prev => 
       prev.includes(day) 
         ? prev.filter(d => d !== day)
@@ -208,6 +232,7 @@ export const useScheduledTasksForm = () => {
 
   // Handle CRM selection
   const handleCRMSelection = (crm: string) => {
+    console.log("CRM selection:", crm);
     setSelectedCRMs(prev => 
       prev.includes(crm)
         ? prev.filter(c => c !== crm)
@@ -221,6 +246,8 @@ export const useScheduledTasksForm = () => {
       toast.info("No changes to save");
       return;
     }
+
+    console.log("Submitting form with changes");
 
     const config = {
       analytics: {
@@ -248,14 +275,16 @@ export const useScheduledTasksForm = () => {
       }
     };
     
+    console.log("Submitting configuration:", config);
     updateWorkflow(config);
-    console.log("Settings submitted", config);
   };
 
   // Effect for handling successful updates
   useEffect(() => {
     if (!isPending && !workflowError && formChanged) {
       // This runs after a successful update
+      console.log("Update successful, resetting form state");
+      
       setInitialValues({
         analytics: {
           schedule: analyticsSchedule,
@@ -294,13 +323,10 @@ export const useScheduledTasksForm = () => {
         setSaveSuccess(false);
       }, 3000);
     }
-  }, [isPending, workflowError, formChanged, analyticsSchedule, analyticsTime, 
-      reportsSchedule, reportsTime, workflowSchedule, workflowTime, 
-      workflowDays, emailNotifications, selectedCRMs, 
-      storagePreference, sortBy, cleaningPreference, automaticModeling]);
+  }, [isPending, workflowError, formChanged]);
 
   // Check if the form is valid and if the button should be enabled
-  const isButtonDisabled = !formChanged || !!error;
+  const isButtonDisabled = !formChanged;
 
   return {
     // Form state

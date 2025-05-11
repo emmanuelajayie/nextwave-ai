@@ -13,6 +13,7 @@ export const NotificationsSection = ({
   onEmailNotificationsChange,
 }: NotificationsSectionProps) => {
   const handleEmailNotificationsChange = (value: boolean) => {
+    console.log("Email notifications changed to:", value);
     onEmailNotificationsChange(value);
     toast.success(`Email notifications ${value ? 'enabled' : 'disabled'}`);
   };

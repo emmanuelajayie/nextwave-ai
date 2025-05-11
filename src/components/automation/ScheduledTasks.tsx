@@ -2,7 +2,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, Calendar, CheckCircle } from "lucide-react";
-import { useState } from "react";
 import { AnalyticsSection } from "./sections/AnalyticsSection";
 import { ReportsSection } from "./sections/ReportsSection";
 import { WorkflowSection } from "./sections/WorkflowSection";
@@ -10,7 +9,6 @@ import { DataSourcesSection } from "./sections/DataSourcesSection";
 import { NotificationsSection } from "./sections/NotificationsSection";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
 import { useScheduledTasksForm } from "@/hooks/useScheduledTasksForm";
 
 export const ScheduledTasks = () => {
@@ -56,6 +54,7 @@ export const ScheduledTasks = () => {
 
   // Handle schedule changes
   const handleScheduleChange = (value: string, type: 'analytics' | 'reports' | 'workflow') => {
+    console.log(`${type} schedule changed to:`, value);
     switch (type) {
       case 'analytics':
         setAnalyticsSchedule(value);
@@ -65,13 +64,8 @@ export const ScheduledTasks = () => {
         break;
       case 'workflow':
         setWorkflowSchedule(value);
-        // Clear workflowDays if schedule is not custom
-        if (value !== 'custom') {
-          // Already handled in the hook
-        }
         break;
     }
-    console.log(`${type} schedule changed to:`, value);
   };
 
   if (isLoading) {
