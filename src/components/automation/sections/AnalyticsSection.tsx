@@ -37,10 +37,11 @@ export const AnalyticsSection = ({
     const newTime = e.target.value;
     onTimeChange(newTime);
     
-    const timeObj = new Date(`2000-01-01T${newTime}`);
-    const formattedTime = timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
-    toast.success(`Analytics time set to ${formattedTime}`);
+    if (newTime) {
+      const timeObj = new Date(`2000-01-01T${newTime}`);
+      const formattedTime = timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      toast.success(`Analytics time set to ${formattedTime}`);
+    }
   };
 
   return (

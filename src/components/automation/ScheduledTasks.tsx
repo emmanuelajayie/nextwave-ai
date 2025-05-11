@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -125,7 +126,18 @@ export const ScheduledTasks = () => {
     }
   }, [workflows]);
 
-  // Improved form change detection 
+  // Check if form has valid schedule configurations
+  const hasValidScheduleConfig = () => {
+    const hasAnalyticsConfig = analyticsSchedule && analyticsTime;
+    const hasReportsConfig = reportsSchedule && reportsTime;
+    const hasWorkflowConfig = workflowSchedule && workflowTime && 
+      (workflowSchedule !== 'custom' || (workflowSchedule === 'custom' && workflowDays.length > 0));
+    
+    // Return true if at least one section has a valid configuration
+    return hasAnalyticsConfig || hasReportsConfig || hasWorkflowConfig;
+  };
+
+  // Monitor form changes with console logs for debugging
   useEffect(() => {
     if (!initialValues) {
       // If there are no initial values yet, mark the form as unchanged
@@ -159,13 +171,14 @@ export const ScheduledTasks = () => {
       }
     };
     
-    // Force the form to be changed if there are any differences at all
+    // Check if any values have changed from initial state
     const hasChanged = JSON.stringify(currentValues) !== JSON.stringify(initialValues);
     
     console.log("Form changed check:", { 
       hasChanged, 
-      current: JSON.stringify(currentValues), 
-      initial: JSON.stringify(initialValues)
+      currentValues, 
+      initialValues,
+      validSchedule: hasValidScheduleConfig() 
     });
     
     setFormChanged(hasChanged);
@@ -197,6 +210,10 @@ export const ScheduledTasks = () => {
         break;
       case 'workflow':
         setWorkflowSchedule(value);
+        // Clear workflowDays if schedule is not custom
+        if (value !== 'custom') {
+          setWorkflowDays([]);
+        }
         break;
     }
     console.log(`${type} schedule changed to:`, value);
@@ -257,7 +274,7 @@ export const ScheduledTasks = () => {
     updateWorkflow(config);
     
     // We'll rely on the useEffect below to handle the success state
-    console.log("Settings submitted");
+    console.log("Settings submitted", config);
   };
 
   // Effect for handling successful updates
@@ -316,6 +333,9 @@ export const ScheduledTasks = () => {
       </Card>
     );
   }
+
+  // Button should be enabled if the form has changed and there are no errors
+  const isButtonDisabled = !formChanged || !!error;
 
   return (
     <Card className="p-6">
@@ -488,7 +508,7 @@ export const ScheduledTasks = () => {
       <Button 
         className="w-full" 
         onClick={handleSubmit}
-        disabled={isPending || !!error || !formChanged}
+        disabled={isButtonDisabled}
       >
         {isPending ? (
           <>

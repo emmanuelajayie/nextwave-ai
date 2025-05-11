@@ -31,9 +31,15 @@ export const WorkflowSection = ({
   onTimeChange,
   onDaySelection,
 }: WorkflowSectionProps) => {
-  const handleTimeChange = (value: string) => {
-    onTimeChange(value);
-    toast.success(`Workflow time updated to ${value}`);
+  const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newTime = e.target.value;
+    onTimeChange(newTime);
+    
+    if (newTime) {
+      const timeObj = new Date(`2000-01-01T${newTime}`);
+      const formattedTime = timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      toast.success(`Workflow time updated to ${formattedTime}`);
+    }
   };
 
   const handleScheduleChange = (value: string) => {
@@ -84,7 +90,7 @@ export const WorkflowSection = ({
         <Input 
           type="time"
           value={time || ""}
-          onChange={(e) => handleTimeChange(e.target.value)}
+          onChange={handleTimeChange}
           placeholder="00:00"
         />
       </div>
