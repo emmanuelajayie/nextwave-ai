@@ -1,29 +1,22 @@
-
-import { Button } from "@/components/ui/button";
+import React from 'react';
 
 interface TeamItemProps {
-  id: string;
   name: string;
-  memberCount: number;
-  onManage: (id: string, name: string) => void;
+  description?: string;
 }
 
-export const TeamItem = ({ id, name, memberCount, onManage }: TeamItemProps) => {
+const TeamItem: React.FC<TeamItemProps> = ({ name, description }) => {
   return (
-    <div className="flex justify-between items-center p-3 border rounded-lg">
-      <div>
-        <h3 className="font-medium">{name}</h3>
-        <p className="text-sm text-muted-foreground">
-          {memberCount || 0} members
-        </p>
-      </div>
-      <Button 
-        variant="outline" 
-        size="sm"
-        onClick={() => onManage(id, name)}
-      >
-        Manage
-      </Button>
+    <div style={{
+      border: '1px solid #ccc',
+      padding: '1rem',
+      marginBottom: '1rem',
+      borderRadius: '8px'
+    }}>
+      <h4>{name}</h4>
+      {description && <p>{description}</p>}
     </div>
   );
 };
+
+export default TeamItem;
